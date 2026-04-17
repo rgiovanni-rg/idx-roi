@@ -48,7 +48,7 @@ function LoginForm() {
       </div>
 
       <div>
-        <div className="text-base font-semibold text-foreground">ROI calculator</div>
+        <div className="text-base font-semibold text-foreground">MI-Calc</div>
         <div className="text-xs text-muted-foreground mt-0.5">Restricted access.</div>
       </div>
 

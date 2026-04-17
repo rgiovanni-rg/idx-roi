@@ -1,12 +1,13 @@
 {
-  "name": "idx-aneko",
+  "name": "mi-calc",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "claude": "npx --yes @anthropic-ai/claude-code"
   },
   "dependencies": {
     "lucide-react": "^0.501.0",

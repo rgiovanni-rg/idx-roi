@@ -1,5 +1,5 @@
-import IdxAnekoApp from "@/components/idx-aneko-app";
+import MiCalcApp from "@/components/mi-calc-app";
 
 export default function Page() {
-  return <IdxAnekoApp />;
+  return <MiCalcApp />;
 }

@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Aligned with Ask-Clarifier / IDX pre-read dark theme (Aneko product UI) */
+/* Aligned with Ask-Clarifier dark theme (Aneko product UI) */
 :root {
   --button-outline: rgba(255, 255, 255, 0.12);
   --badge-outline: rgba(255, 255, 255, 0.08);

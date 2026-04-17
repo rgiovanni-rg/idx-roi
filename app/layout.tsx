@@ -14,10 +14,10 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "ROI calculator · Aneko AI",
+    default: "MI-Calc · Aneko AI",
     template: "%s · Aneko AI",
   },
-  description: "ROI calculator — internal use.",
+  description: "MI-Calc — internal use.",
   icons: { icon: "/favicon.svg" },
   robots: {
     index: false,
@@ -32,13 +32,13 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "ROI calculator · Aneko AI",
-    description: "ROI calculator — internal use.",
+    title: "MI-Calc · Aneko AI",
+    description: "MI-Calc — internal use.",
   },
   twitter: {
     card: "summary",
-    title: "ROI calculator · Aneko AI",
-    description: "ROI calculator — internal use.",
+    title: "MI-Calc · Aneko AI",
+    description: "MI-Calc — internal use.",
   },
 };
 

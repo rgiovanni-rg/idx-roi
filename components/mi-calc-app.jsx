@@ -8,11 +8,11 @@ import {
 import * as XLSX from "xlsx";
 
 // =============================================================================
-// IDX Group Australia × Aneko AI — Unified Calculator
-// UI tokens match Ask-Clarifier (IDX pre-read): see app/globals.css + tailwind aneko.*
+// MI-Calc — Unified calculator (Aneko AI)
+// UI tokens match Ask-Clarifier: see app/globals.css + tailwind aneko.*
 // =============================================================================
 
-const STORAGE_KEY = "idx-aneko-calc-v1";
+const STORAGE_KEY = "mi-calc-v1";
 const APP_VERSION = "1.0.0";
 
 const DEFAULT_MODALITIES = [
@@ -26,12 +26,11 @@ const DEFAULT_MODALITIES = [
 ];
 
 const DEFAULT_INTERRUPTIONS = [
-  { id: "comms",         category: "Critical / urgent finding communication",     engine: "Comms",      ranzcr: "S9.1, R9.1",          rationale: "Radiologist must communicate urgent findings to referrer. Coordination of care required if uncontactable.",           defaultFreq: 1.5, defaultMins: 8, idxFreq: 1.5, idxMins: 8, addressablePct: 85 },
-  { id: "inappropriate", category: "Clinically inappropriate referrals",          engine: "Intake",     ranzcr: "R7.4, R7.8",          rationale: "Referrals must be reviewed and only accepted upon clinical appropriateness determination.",                              defaultFreq: 2,   defaultMins: 4, idxFreq: 2,   idxMins: 4, addressablePct: 60 },
-  { id: "prereqs",       category: "Incomplete prerequisites (priors, labs, safety)", engine: "Intake",  ranzcr: "R7.7, R7.11, R7.12, R9.4", rationale: "Referrals reviewed for previous imaging, contraindications, allergies, pregnancy, metal, blood tests.",             defaultFreq: 3,   defaultMins: 3, idxFreq: 3,   idxMins: 3, addressablePct: 75 },
-  { id: "protocol",      category: "Tech / protocol escalations",                 engine: "Preference", ranzcr: "R8.7, R8.19",         rationale: "Techs seek radiologist guidance in defined circumstances before proceeding.",                                           defaultFreq: 3,   defaultMins: 2, idxFreq: 3,   idxMins: 2, addressablePct: 40 },
-  { id: "callback",      category: "Referrer callbacks on issued reports",        engine: "Comms",      ranzcr: "S9.4",                rationale: "Reporting radiologist must be available to discuss findings with referrers.",                                          defaultFreq: 2,   defaultMins: 3, idxFreq: 2,   idxMins: 3, addressablePct: 30 },
-  { id: "other",         category: "Other reading room interruptions",            engine: "General",    ranzcr: "—",                   rationale: "Ambient: phone calls, staff queries, equipment issues, admin.",                                                          defaultFreq: 4,   defaultMins: 1, idxFreq: 4,   idxMins: 1, addressablePct: 20 },
+  { id: "comms",    category: "Critical / urgent finding communication",                  engine: "Comms",      rationale: "Radiologist must communicate urgent findings to referrer. Coordination of care required if uncontactable.", defaultFreq: 1.5, defaultMins: 8, idxFreq: 1.5, idxMins: 8, addressablePct: 85 },
+  { id: "infoseek", category: "Information seeking (priors, RIS/PACS lookup, history)", engine: "Intake",     rationale: "Radiologist pauses mid-read to fetch priors, search RIS/PACS, look up history or missing context.",          defaultFreq: 5,   defaultMins: 2, idxFreq: 5,   idxMins: 2, addressablePct: 75 },
+  { id: "protocol", category: "Tech / protocol escalations",                              engine: "Preference", rationale: "Techs seek radiologist guidance in defined circumstances before proceeding.",                                defaultFreq: 3,   defaultMins: 2, idxFreq: 3,   idxMins: 2, addressablePct: 40 },
+  { id: "callback", category: "Referrer callbacks on issued reports",                    engine: "Comms",      rationale: "Reporting radiologist must be available to discuss findings with referrers.",                               defaultFreq: 2,   defaultMins: 3, idxFreq: 2,   idxMins: 3, addressablePct: 30 },
+  { id: "other",    category: "Other reading room interruptions",                         engine: "General",    rationale: "Ambient: phone calls, staff queries, equipment issues, admin.",                                              defaultFreq: 4,   defaultMins: 1, idxFreq: 4,   idxMins: 1, addressablePct: 20 },
 ];
 
 const DEFAULT_STATE = {
@@ -50,7 +49,6 @@ const DEFAULT_STATE = {
   },
   ops: {
     interruptions: DEFAULT_INTERRUPTIONS,
-    boardTargetPct: 2,
   },
 };
 
@@ -153,7 +151,8 @@ function computeCorporate(state) {
 
 function computeOps(state) {
   const { radiologists, shiftsPerYear, shiftMinutes } = state.shared;
-  const { interruptions, boardTargetPct } = state.ops;
+  const { interruptions } = state.ops;
+  const corporateTargetPct = state.board.efficiencyGain;
 
   const rows = interruptions.map((r) => {
     const timeLost = r.idxFreq * r.idxMins;
@@ -174,13 +173,13 @@ function computeOps(state) {
   const rankMap = new Map(ranked.map((r, i) => [r.id, i + 1]));
   const maxAddr = Math.max(...rows.map((r) => r.addr), 0.001);
 
-  const gap = totals.addrPct - boardTargetPct;
+  const gap = totals.addrPct - corporateTargetPct;
   const status =
-    gap >= 1 ? { label: "Comfortable margin", tone: "ok" }
-    : gap >= 0 ? { label: "Thin margin",      tone: "warn" }
-               : { label: "Below target",     tone: "bad" };
+    gap >= 1 ? { label: "Addressable interruptions exceed corporate target — defensible", tone: "ok" }
+    : gap >= 0 ? { label: "Addressable interruptions just meet corporate target — thin",  tone: "warn" }
+               : { label: "Addressable interruptions fall short of corporate target",     tone: "bad" };
 
-  return { rows, ranked, rankMap, maxAddr, totals, gap, status };
+  return { rows, ranked, rankMap, maxAddr, totals, gap, status, corporateTargetPct };
 }
 
 // ---------- Excel export ----------
@@ -192,7 +191,7 @@ function exportWorkbook(state) {
 
   // Sheet 1: Assumptions
   const assumptions = [
-    ["IDX × Aneko AI — ROI Scenario"],
+    ["MI-Calc × Aneko AI — ROI Scenario"],
     ["Generated", today],
     [],
     ["SHARED"],
@@ -225,13 +224,13 @@ function exportWorkbook(state) {
     ["Labor minutes (banked)", Number(c.labMin.toFixed(2))],
     ["Additional studies per year", Math.round(c.addStudiesYr)],
     ["Revenue unlocked (AUD)", Math.round(c.revenueUnlocked)],
-    ["Labor saved (AUD)", Math.round(c.laborSaved)],
+    ["Labor value reclaimed (AUD)", Math.round(c.laborSaved)],
     ["ANNUAL TOTAL VALUE (AUD)", Math.round(c.totalValue)],
     ["Breakeven (months)", c.breakevenMo !== null ? Number(c.breakevenMo.toFixed(2)) : ""],
     ["Equivalent radiologists", Number(c.equivRads.toFixed(2))],
     [],
     ["SENSITIVITY"],
-    ["Efficiency %", "Min/shift", "Studies/yr", "Revenue (AUD)", "Labor saved (AUD)", "Total (AUD)", "Equiv rads"],
+    ["Efficiency %", "Min/shift", "Studies/yr", "Revenue (AUD)", "Labor reclaimed (AUD)", "Total (AUD)", "Equiv rads"],
     ...c.scenarios.map(s => [s.pct, Number(s.mR.toFixed(2)), Math.round(s.ast), Math.round(s.rev), Math.round(s.lab), Math.round(s.total), Number(s.equiv.toFixed(2))]),
   ];
   const corpSheet = XLSX.utils.aoa_to_sheet(corp);
@@ -242,25 +241,25 @@ function exportWorkbook(state) {
   const ops = [
     ["OPERATIONS DIAGNOSTIC"],
     [],
-    ["Board target (%)", state.ops.boardTargetPct],
+    ["Corporate efficiency target (from Corporate tab, %)", o.corporateTargetPct],
     [],
     ["INTERRUPTION INVENTORY"],
-    ["Rank", "Category", "Engine", "RANZCR", "Default freq", "Default min", "IDX freq", "IDX min", "Lost / shift (min)", "Addressable %", "Addressable (min)"],
-    ...o.ranked.map(r => [o.rankMap.get(r.id), r.category, r.engine, r.ranzcr, r.defaultFreq, r.defaultMins, r.idxFreq, r.idxMins, Number(r.timeLost.toFixed(2)), r.addressablePct, Number(r.addr.toFixed(2))]),
-    ["", "TOTAL", "", "", "", "", "", "", Number(o.totals.tot.toFixed(2)), "", Number(o.totals.addr.toFixed(2))],
+    ["Rank", "Category", "Engine", "Default freq", "Default min", "MI-Calc freq", "MI-Calc min", "Lost / shift (min)", "Addressable %", "Addressable (min)"],
+    ...o.ranked.map(r => [o.rankMap.get(r.id), r.category, r.engine, r.defaultFreq, r.defaultMins, r.idxFreq, r.idxMins, Number(r.timeLost.toFixed(2)), r.addressablePct, Number(r.addr.toFixed(2))]),
+    ["", "TOTAL", "", "", "", "", "", Number(o.totals.tot.toFixed(2)), "", Number(o.totals.addr.toFixed(2))],
     [],
     ["RECONCILIATION"],
-    ["Board target (%)", state.ops.boardTargetPct],
-    ["Addressable (% of shift)", Number(o.totals.addrPct.toFixed(2))],
-    ["Gap (addressable − target)", Number((o.totals.addrPct - state.ops.boardTargetPct).toFixed(2))],
+    ["Corporate efficiency target (%)", o.corporateTargetPct],
+    ["Addressable interruptions (% of shift)", Number(o.totals.addrPct.toFixed(2))],
+    ["Gap (addressable − target)", Number(o.gap.toFixed(2))],
     ["Status", o.status.label],
     ["Network-wide addressable hours / yr", Math.round(o.totals.yearlyHrs)],
   ];
   const opsSheet = XLSX.utils.aoa_to_sheet(ops);
-  opsSheet["!cols"] = [{ wch: 6 }, { wch: 44 }, { wch: 12 }, { wch: 18 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 16 }, { wch: 14 }, { wch: 16 }];
+  opsSheet["!cols"] = [{ wch: 6 }, { wch: 44 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 16 }, { wch: 14 }, { wch: 16 }];
   XLSX.utils.book_append_sheet(wb, opsSheet, "Operations");
 
-  XLSX.writeFile(wb, `idx-aneko-roi-${today}.xlsx`);
+  XLSX.writeFile(wb, `mi-calc-roi-${today}.xlsx`);
 }
 
 // =============================================================================
@@ -330,7 +329,7 @@ export default function App() {
             <div className="text-foreground font-black tracking-[0.2em] text-sm">ANEKO</div>
           </div>
           <div className="h-6 w-px bg-border" />
-          <div className="text-sm font-semibold text-foreground">IDX ROI</div>
+          <div className="text-sm font-semibold text-foreground">MI-Calc</div>
         </div>
 
         {/* Tabs */}
@@ -356,11 +355,17 @@ export default function App() {
       </header>
 
       {/* Shared inputs */}
-      <section className="px-5 py-3 shrink-0 border-b border-border bg-aneko-deep grid grid-cols-4 gap-3">
-        <InputCard label="Radiologists"    value={state.shared.radiologists}   onChange={(v) => updShared("radiologists", v)} />
-        <InputCard label="Shifts / yr"     value={state.shared.shiftsPerYear}  onChange={(v) => updShared("shiftsPerYear", v)} />
-        <InputCard label="Minutes / shift" value={state.shared.shiftMinutes}   onChange={(v) => updShared("shiftMinutes", v)} />
-        <InputCard label="Rad cost / yr"   value={state.shared.radCostPerYear} onChange={(v) => updShared("radCostPerYear", v)} prefix="$" />
+      <section className="px-5 pt-3 pb-3 shrink-0 border-b border-border bg-aneko-deep">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-foreground">Shared assumptions</h2>
+          <span className="text-[11px] text-muted-foreground">Edit any field — used by both tabs</span>
+        </div>
+        <div className="grid grid-cols-4 gap-3">
+          <InputCard label="Radiologists"    value={state.shared.radiologists}   onChange={(v) => updShared("radiologists", v)} />
+          <InputCard label="Shifts / yr"     value={state.shared.shiftsPerYear}  onChange={(v) => updShared("shiftsPerYear", v)} />
+          <InputCard label="Minutes / shift" value={state.shared.shiftMinutes}   onChange={(v) => updShared("shiftMinutes", v)} />
+          <InputCard label="Rad cost / yr"   value={state.shared.radCostPerYear} onChange={(v) => updShared("radCostPerYear", v)} prefix="$" />
+        </div>
       </section>
 
       {/* Tab content */}
@@ -396,7 +401,7 @@ function BoardView({ state, updBoard }) {
         <div className="rounded-lg bg-aneko-deep border border-primary/40 px-4 py-3 ">
           <div className="flex items-start justify-between gap-2 mb-2">
             <div>
-              <div className="text-[10px] uppercase tracking-widest text-primary font-bold">Labor efficiency</div>
+              <div className="text-sm uppercase tracking-wide text-primary font-bold">Labor efficiency</div>
               <p className="text-[11px] text-muted-foreground/90 mt-0.5">Time reclaimed and directed to labor bank vs capacity</p>
             </div>
             <Clock className="w-5 h-5 text-primary shrink-0" />
@@ -416,8 +421,8 @@ function BoardView({ state, updBoard }) {
         <div className="rounded-lg bg-aneko-deep border-2 border-aneko-success/60 px-4 py-3 ">
           <div className="flex items-start justify-between gap-2 mb-2">
             <div>
-              <div className="text-[10px] uppercase tracking-widest text-aneko-success font-bold">Annual value & labor saved</div>
-              <p className="text-[11px] text-muted-foreground/90 mt-0.5">Capacity revenue plus labor savings (same total as headline)</p>
+              <div className="text-sm uppercase tracking-wide text-aneko-success font-bold">Annual value & labor reclaimed</div>
+              <p className="text-[11px] text-muted-foreground/90 mt-0.5">Capacity revenue plus dollar-equivalent of reclaimed clinician time (not a cash reduction unless headcount changes)</p>
             </div>
             <DollarSign className="w-5 h-5 text-aneko-success shrink-0" />
           </div>
@@ -427,7 +432,7 @@ function BoardView({ state, updBoard }) {
               <span className="tabular-nums font-bold text-foreground">{fmtCurrency(revenueUnlocked)}</span>
             </div>
             <div className="flex justify-between items-baseline gap-3">
-              <span className="text-muted-foreground">Labor saved</span>
+              <span className="text-muted-foreground">Labor value reclaimed</span>
               <span className="tabular-nums font-bold text-foreground">{fmtCurrency(laborSaved)}</span>
             </div>
             <div className="h-px bg-border" />
@@ -497,11 +502,11 @@ function BoardView({ state, updBoard }) {
         <InputPanel title="Study mix" className="col-span-6">
           <table className="w-full text-xs">
             <thead>
-              <tr className="text-[10px] uppercase text-muted-foreground border-b border-border">
-                <th className="text-left py-1.5 font-semibold">Modality</th>
-                <th className="text-right py-1.5 font-semibold">Mix %</th>
-                <th className="text-right py-1.5 font-semibold">Rev $</th>
-                <th className="text-right py-1.5 font-semibold">Min</th>
+              <tr className="text-xs uppercase tracking-wide text-foreground/85 border-b-2 border-border">
+                <th className="text-left py-2 font-bold">Modality</th>
+                <th className="text-right py-2 font-bold">Mix %</th>
+                <th className="text-right py-2 font-bold">Rev $</th>
+                <th className="text-right py-2 font-bold">Min</th>
               </tr>
             </thead>
             <tbody>
@@ -529,21 +534,21 @@ function BoardView({ state, updBoard }) {
       <div className="shrink-0 w-full max-w-3xl mx-auto rounded-lg bg-aneko-elev border border-input px-4 py-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3 pb-2 border-b border-input">
           <div>
-            <h2 className="text-sm font-bold text-foreground tracking-tight">Scenario results</h2>
+            <h2 className="text-sm uppercase tracking-wide font-bold text-foreground">Scenario results</h2>
             <p className="text-[11px] text-muted-foreground mt-0.5">Sensitivity analysis — how totals change at different efficiency assumptions (your current gain is highlighted).</p>
           </div>
-          <span className="text-[10px] uppercase tracking-widest text-primary font-bold">Outputs</span>
+          <span className="text-xs uppercase tracking-wide text-muted-foreground font-bold">Outputs</span>
         </div>
         <table className="w-full text-xs">
           <thead>
-            <tr className="text-[10px] uppercase text-muted-foreground border-b border-border">
-              <th className="text-left py-1.5 font-semibold">Efficiency</th>
-              <th className="text-right py-1.5 font-semibold">Min/shift</th>
-              <th className="text-right py-1.5 font-semibold">Studies/yr</th>
-              <th className="text-right py-1.5 font-semibold">Revenue</th>
-              <th className="text-right py-1.5 font-semibold">Labor saved</th>
-              <th className="text-right py-1.5 font-semibold">Total</th>
-              <th className="text-right py-1.5 font-semibold">Equiv rads</th>
+            <tr className="text-xs uppercase tracking-wide text-foreground/85 border-b-2 border-border">
+              <th className="text-left py-2 font-bold">Efficiency</th>
+              <th className="text-right py-2 font-bold">Min/shift</th>
+              <th className="text-right py-2 font-bold">Studies/yr</th>
+              <th className="text-right py-2 font-bold">Revenue</th>
+              <th className="text-right py-2 font-bold">Labor reclaimed</th>
+              <th className="text-right py-2 font-bold">Total</th>
+              <th className="text-right py-2 font-bold">Equiv rads</th>
             </tr>
           </thead>
           <tbody>
@@ -572,7 +577,7 @@ function BoardView({ state, updBoard }) {
 // OPERATIONAL DIAGNOSTIC VIEW
 // =============================================================================
 function OpsView({ state, updOps }) {
-  const { interruptions, boardTargetPct } = state.ops;
+  const { interruptions } = state.ops;
 
   const updateRow = (idx, field, value) => {
     const next = [...interruptions];
@@ -581,7 +586,7 @@ function OpsView({ state, updOps }) {
   };
 
   const o = useMemo(() => computeOps(state), [state]);
-  const { rows, rankMap, maxAddr, totals, gap, status } = o;
+  const { rows, rankMap, maxAddr, totals, gap, status, corporateTargetPct } = o;
 
   const toneClass = {
     ok:   "border-aneko-success bg-aneko-deep",
@@ -592,40 +597,39 @@ function OpsView({ state, updOps }) {
 
   return (
     <div className="h-full flex flex-col gap-3 px-5 py-3 overflow-hidden">
-      {/* Top row: target input + 4 tiles */}
+      {/* Top row: corporate target (read-only) + 4 outcome tiles */}
       <div className="grid grid-cols-5 gap-3 shrink-0">
-        <InputCard label="Board target %" value={boardTargetPct} onChange={(v) => updOps("boardTargetPct", v)} step={0.1} />
-        <Tile label="Interrupted min / shift"  value={totals.tot.toFixed(1)}  sub={`${totals.totPct.toFixed(1)}%`} />
-        <HeroTile label="Addressable min / shift" value={totals.addr.toFixed(1)} sub={`${totals.addrPct.toFixed(1)}%`} />
-        <Tile label={`vs ${boardTargetPct.toFixed(1)}% target`} value={`${gap >= 0 ? "+" : ""}${gap.toFixed(1)}%`} valueTone={status.tone === "bad" ? "orange" : status.tone === "warn" ? "orange" : "emerald"} />
+        <Tile label="Corporate target (from Corporate tab)" value={`${corporateTargetPct.toFixed(1)}%`} sub="Efficiency gain assumption" />
+        <Tile label="Interrupted min / shift"  value={totals.tot.toFixed(1)}  sub={`${totals.totPct.toFixed(1)}% of shift`} />
+        <HeroTile label="Addressable min / shift" value={totals.addr.toFixed(1)} sub={`${totals.addrPct.toFixed(1)}% of shift`} />
+        <Tile label={`vs ${corporateTargetPct.toFixed(1)}% target`} value={`${gap >= 0 ? "+" : ""}${gap.toFixed(1)}%`} valueTone={status.tone === "bad" ? "orange" : status.tone === "warn" ? "orange" : "emerald"} />
         <Tile label="Addressable hrs / yr"   value={fmt(totals.yearlyHrs)} />
       </div>
 
       {/* Main table */}
       <div className="flex-1 min-h-0 rounded-md bg-aneko-deep border border-border flex flex-col overflow-hidden">
-        <div className="px-4 py-2.5 border-b border-border flex items-center justify-between shrink-0">
-          <h2 className="text-[10px] uppercase tracking-widest text-foreground/85 font-bold">Interruption inventory</h2>
-          <div className="text-xs text-muted-foreground">Per rad / shift · RANZCR v12</div>
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0">
+          <h2 className="text-sm uppercase tracking-wide text-foreground font-bold">Interruption inventory</h2>
+          <div className="text-xs text-muted-foreground">Per rad / shift · highlighted columns are editable</div>
         </div>
         <div className="flex-1 overflow-auto">
           <table className="w-full text-xs">
             <thead className="sticky top-0 bg-aneko-deep z-10">
-              <tr className="text-[10px] uppercase text-muted-foreground border-b border-border">
-                <th className="text-center px-2 py-2 w-10 font-semibold">#</th>
-                <th className="text-left px-3 py-2 font-semibold">Category</th>
-                <th className="text-left px-2 py-2 font-semibold">Engine</th>
-                <th className="text-left px-2 py-2 font-semibold">RANZCR</th>
-                <th className="text-center px-2 py-2 border-l border-border font-semibold" colSpan={2}>Public default</th>
-                <th className="text-center px-2 py-2 border-l-2 border-primary font-bold text-primary/90 bg-aneko-elev" colSpan={2}>IDX actual (edit)</th>
-                <th className="text-right px-2 py-2 border-l border-border font-semibold">Lost/shift</th>
-                <th className="text-right px-2 py-2 font-semibold">Addr %</th>
-                <th className="px-3 py-2 border-l border-border font-semibold">Addressable</th>
+              <tr className="text-xs uppercase tracking-wide text-foreground/85 border-b-2 border-border">
+                <th className="text-center px-2 py-2.5 w-10 font-bold">#</th>
+                <th className="text-left px-3 py-2.5 font-bold">Category</th>
+                <th className="text-left px-2 py-2.5 font-bold">Engine</th>
+                <th className="text-center px-2 py-2.5 border-l border-border font-bold text-muted-foreground" colSpan={2}>Public default</th>
+                <th className="text-center px-2 py-2.5 border-l-2 border-primary font-bold text-primary bg-primary/10" colSpan={2}>MI-Calc actual · editable</th>
+                <th className="text-right px-2 py-2.5 border-l border-border font-bold">Lost/shift</th>
+                <th className="text-right px-2 py-2.5 font-bold text-primary bg-primary/10">Addr % · editable</th>
+                <th className="px-3 py-2.5 border-l border-border font-bold">Addressable</th>
               </tr>
-              <tr className="text-[10px] text-muted-foreground/90 bg-aneko-deep border-b border-border">
-                <th></th><th></th><th></th><th></th>
+              <tr className="text-[11px] text-muted-foreground bg-aneko-deep border-b border-border font-semibold">
+                <th></th><th></th><th></th>
                 <th className="text-center border-l border-border py-1">Freq</th><th className="text-center py-1">Min</th>
-                <th className="text-center border-l-2 border-primary bg-aneko-elev py-1">Freq</th><th className="text-center bg-aneko-elev py-1">Min</th>
-                <th className="border-l border-border"></th><th></th>
+                <th className="text-center border-l-2 border-primary bg-primary/10 py-1 text-primary">Freq</th><th className="text-center bg-primary/10 py-1 text-primary">Min</th>
+                <th className="border-l border-border"></th><th className="bg-primary/10"></th>
                 <th className="border-l border-border"></th>
               </tr>
             </thead>
@@ -643,17 +647,16 @@ function OpsView({ state, updOps }) {
                     <td className="px-2 py-2 align-middle">
                       <span className="inline-block px-1.5 py-0.5 rounded border border-input text-[10px] font-semibold text-foreground/90">{r.engine}</span>
                     </td>
-                    <td className="px-2 py-2 align-middle text-[10px] text-muted-foreground tabular-nums">{r.ranzcr}</td>
                     <td className="px-2 py-2 text-center tabular-nums text-muted-foreground border-l border-border">{r.defaultFreq}</td>
                     <td className="px-2 py-2 text-center tabular-nums text-muted-foreground">{r.defaultMins}</td>
-                    <td className="px-1.5 py-1 border-l-2 border-primary bg-aneko-elev">
+                    <td className="px-1.5 py-1 border-l-2 border-primary bg-primary/10">
                       <CellInput value={r.idxFreq} step={0.1} onChange={(v) => updateRow(i, "idxFreq", v)} wider />
                     </td>
-                    <td className="px-1.5 py-1 bg-aneko-elev">
+                    <td className="px-1.5 py-1 bg-primary/10">
                       <CellInput value={r.idxMins} step={0.1} onChange={(v) => updateRow(i, "idxMins", v)} wider />
                     </td>
                     <td className="px-2 py-2 text-right tabular-nums font-semibold text-foreground border-l border-border">{r.timeLost.toFixed(1)}</td>
-                    <td className="px-2 py-1 text-right">
+                    <td className="px-2 py-1 text-right bg-primary/10">
                       <CellInput value={r.addressablePct} onChange={(v) => updateRow(i, "addressablePct", v)} />
                     </td>
                     <td className="px-3 py-2 border-l border-border">
@@ -669,11 +672,11 @@ function OpsView({ state, updOps }) {
               })}
               <tr className="font-bold border-t-2 border-input bg-aneko-deep">
                 <td></td>
-                <td className="px-3 py-2 text-foreground" colSpan={3}>Total</td>
+                <td className="px-3 py-2 text-foreground" colSpan={2}>Total</td>
                 <td className="border-l border-border"></td><td></td>
-                <td className="border-l-2 border-primary bg-aneko-elev"></td><td className="bg-aneko-elev"></td>
+                <td className="border-l-2 border-primary bg-primary/10"></td><td className="bg-primary/10"></td>
                 <td className="px-2 py-2 text-right tabular-nums text-foreground border-l border-border">{totals.tot.toFixed(1)}</td>
-                <td></td>
+                <td className="bg-primary/10"></td>
                 <td className="px-3 py-2 text-right tabular-nums text-aneko-success border-l border-border">{totals.addr.toFixed(1)}</td>
               </tr>
             </tbody>
@@ -687,7 +690,7 @@ function OpsView({ state, updOps }) {
           <AlertCircle className={`w-4 h-4 shrink-0 ${toneText}`} />
           <div className="flex-1 text-xs text-foreground/90">
             <span className={`font-bold ${toneText}`}>{status.label}.</span>{" "}
-            Target <strong className="text-foreground">{boardTargetPct.toFixed(1)}%</strong> · Addressable <strong className="text-foreground">{totals.addrPct.toFixed(1)}%</strong> · Gap <strong className={toneText}>{gap >= 0 ? "+" : ""}{gap.toFixed(1)}%</strong>
+            Corporate target <strong className="text-foreground">{corporateTargetPct.toFixed(1)}%</strong> · Addressable interruptions <strong className="text-foreground">{totals.addrPct.toFixed(1)}%</strong> · Gap <strong className={toneText}>{gap >= 0 ? "+" : ""}{gap.toFixed(1)}%</strong>
           </div>
         </div>
       </div>
@@ -720,15 +723,15 @@ function SaveIndicator({ visible }) {
   );
 }
 
-// Input field: sunken bg-background, border-input, primary focus ring
+// Input field: stronger primary tint + border so editable fields read clearly as inputs
 function InputCard({ label, value, onChange, prefix, step = 1 }) {
   return (
-    <div className="rounded-md bg-aneko-elev border border-border p-3">
-      <label className="text-[10px] uppercase tracking-widest text-primary font-bold block mb-1.5">{label}</label>
+    <div className="rounded-md bg-primary/5 border-2 border-primary/40 p-3">
+      <label className="text-xs uppercase tracking-wide text-primary font-bold block mb-1.5">{label}</label>
       <div className="relative">
         {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base">{prefix}</span>}
         <input type="number" step={step} value={value} onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          className={`w-full bg-background border border-input rounded-md ${prefix ? "pl-7" : "pl-3"} pr-3 py-1.5 text-base font-bold tabular-nums text-foreground focus:border-primary focus:outline-none`} />
+          className={`w-full bg-background border-2 border-primary/50 rounded-md ${prefix ? "pl-7" : "pl-3"} pr-3 py-1.5 text-base font-bold tabular-nums text-foreground focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none`} />
       </div>
     </div>
   );
@@ -743,11 +746,11 @@ function Tile({ label, value, sub, icon, valueTone }) {
   return (
     <div className="rounded-md bg-aneko-deep border border-border px-4 py-2.5">
       <div className="flex items-start justify-between">
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{label}</div>
+        <div className="text-xs uppercase tracking-wide text-muted-foreground font-bold leading-tight">{label}</div>
         {icon && <div className="text-muted-foreground">{icon}</div>}
       </div>
       <div className={`text-2xl font-black tabular-nums leading-tight mt-1 ${valueClass}`}>{value}</div>
-      {sub && <div className="text-[10px] text-muted-foreground mt-0.5">{sub}</div>}
+      {sub && <div className="text-[11px] text-muted-foreground mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -757,11 +760,11 @@ function HeroTile({ label, value, sub, icon }) {
   return (
     <div className="rounded-md bg-aneko-deep border-2 border-aneko-success px-4 py-2.5">
       <div className="flex items-start justify-between">
-        <div className="text-[10px] uppercase tracking-widest text-aneko-success font-bold">{label}</div>
+        <div className="text-xs uppercase tracking-wide text-aneko-success font-bold leading-tight">{label}</div>
         {icon && <div className="text-aneko-success">{icon}</div>}
       </div>
       <div className="text-2xl font-black tabular-nums leading-tight mt-1 text-aneko-success">{value}</div>
-      {sub && <div className="text-[10px] text-foreground/85 mt-0.5">{sub}</div>}
+      {sub && <div className="text-[11px] text-foreground/85 mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -769,9 +772,10 @@ function HeroTile({ label, value, sub, icon }) {
 // Panel styles — Input vs Output clearly differentiated
 function InputPanel({ title, children, className = "" }) {
   return (
-    <div className={`rounded-md bg-aneko-elev border border-border flex flex-col overflow-hidden ${className}`}>
-      <div className="px-4 py-2 border-b border-border shrink-0 bg-aneko-deep">
-        <span className="text-[10px] uppercase tracking-widest text-primary font-bold">{title}</span>
+    <div className={`rounded-md bg-aneko-elev border-2 border-primary/30 flex flex-col overflow-hidden ${className}`}>
+      <div className="px-4 py-2.5 border-b-2 border-primary/30 shrink-0 bg-primary/10 flex items-center justify-between">
+        <span className="text-sm uppercase tracking-wide text-primary font-bold">{title}</span>
+        <span className="text-[10px] uppercase tracking-widest text-primary/80 font-bold">Inputs</span>
       </div>
       <div className="p-4 space-y-4">{children}</div>
     </div>
@@ -797,7 +801,7 @@ function SliderInput({ label, value, min, max, step, onChange, display, minL, ma
 function CellInput({ value, onChange, step = 1, wider = false }) {
   return (
     <input type="number" step={step} value={value} onChange={(e) => onChange(e.target.value)}
-      className={`${wider ? "w-16" : "w-14"} text-right bg-background border border-input rounded px-1.5 py-1 tabular-nums text-xs font-semibold text-foreground focus:border-primary focus:outline-none`} />
+      className={`${wider ? "w-16" : "w-14"} text-right bg-background border-2 border-primary/50 rounded px-1.5 py-1 tabular-nums text-xs font-bold text-foreground focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none`} />
   );
 }
 
