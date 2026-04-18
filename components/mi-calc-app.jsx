@@ -249,6 +249,110 @@ function exportWorkbook(state) {
 }
 
 // =============================================================================
+// ASSUMPTIONS RAIL (right column)
+// =============================================================================
+function AssumptionsRail({ tab, state, updShared, updBoard }) {
+  const { modalities, engagementCost } = state.board;
+  const c = useMemo(() => computeCorporate(state), [state]);
+  const { wRev, wTime, totalMix, breakevenMo } = c;
+
+  const updateModality = (idx, field, value) => {
+    const next = [...modalities];
+    next[idx] = { ...next[idx], [field]: parseFloat(value) || 0 };
+    updBoard("modalities", next);
+  };
+
+  return (
+    <div className="px-5 py-5 space-y-6">
+      <div>
+        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Model assumptions</h2>
+        <p className="text-xs text-muted-foreground mt-1">Used by both tabs</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+        <InputCard label="Radiologists" value={state.shared.radiologists} onChange={(v) => updShared("radiologists", v)} />
+        <InputCard label="Shifts / yr" value={state.shared.shiftsPerYear} onChange={(v) => updShared("shiftsPerYear", v)} />
+        <InputCard label="Minutes / shift" value={state.shared.shiftMinutes} onChange={(v) => updShared("shiftMinutes", v)} />
+        <InputCard label="Rad cost / yr" value={state.shared.radCostPerYear} onChange={(v) => updShared("radCostPerYear", v)} prefix="$" />
+      </div>
+
+      {tab === "board" && (
+        <>
+          <InputPanel title="Study mix">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
+                  <th className="text-left pb-2 font-semibold">Modality</th>
+                  <th className="text-right pb-2 font-semibold pr-2">Volume mix %</th>
+                  <th className="text-right pb-2 font-semibold pr-2">Revenue / study</th>
+                  <th className="text-right pb-2 font-semibold pr-2">Read minutes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {modalities.map((m, i) => (
+                  <tr key={i} className="border-t border-border/40">
+                    <td className="py-1.5 text-foreground font-medium pr-1">{m.name}</td>
+                    <td className="text-right py-1.5"><CellInput value={m.mixPct} onChange={(v) => updateModality(i, "mixPct", v)} /></td>
+                    <td className="text-right py-1.5"><CellInput value={m.revenuePerStudy} onChange={(v) => updateModality(i, "revenuePerStudy", v)} wider /></td>
+                    <td className="text-right py-1.5"><CellInput value={m.readMinutes} onChange={(v) => updateModality(i, "readMinutes", v)} /></td>
+                  </tr>
+                ))}
+                {totalMix !== 100 && (
+                  <tr className="border-t border-border/40 bg-aneko-warning/10">
+                    <td className="py-2 pl-1 text-aneko-warning text-sm font-semibold uppercase tracking-wide">
+                      {totalMix > 100 ? "Over by" : "Remaining"}
+                    </td>
+                    <td className="text-right py-2 pr-2">
+                      <span className="inline-block w-20 pr-2 text-aneko-warning font-bold tabular-nums text-base">
+                        {totalMix > 100 ? `−${totalMix - 100}%` : `+${100 - totalMix}%`}
+                      </span>
+                    </td>
+                    <td colSpan={2}></td>
+                  </tr>
+                )}
+                <tr className="border-t-2 border-border/60 text-base font-semibold">
+                  <td className="py-3 text-muted-foreground uppercase tracking-wide text-xs">Weighted avg</td>
+                  <td className={`text-right tabular-nums py-3 ${totalMix === 100 ? "text-foreground" : "text-aneko-warning"}`}><span className="inline-block w-20 pr-2">{totalMix}%</span></td>
+                  <td className="text-right tabular-nums text-foreground py-3"><span className="inline-block w-24 pr-2">{fmtCurrency(wRev)}</span></td>
+                  <td className="text-right tabular-nums text-foreground py-3"><span className="inline-block w-20 pr-2">{wTime.toFixed(1)}</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </InputPanel>
+
+          <InputPanel title="Investment">
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-2">Investment cost</label>
+              <div className="flex flex-wrap gap-3 items-center">
+                <div className="relative flex-1 min-w-[8rem]">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base">$</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={engagementCost}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "" || /^-?\d*\.?\d*$/.test(v)) updBoard("engagementCost", v === "" ? 0 : parseFloat(v) || 0);
+                    }}
+                    onFocus={(e) => e.target.select()}
+                    className="w-full bg-aneko-deep rounded-md pl-7 pr-3 py-2 text-right tabular-nums text-base font-semibold text-foreground ring-1 ring-border hover:ring-primary/50 focus:ring-2 focus:ring-primary focus:outline-none transition"
+                    placeholder="0"
+                  />
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm text-muted-foreground">Breakeven</span>
+                  <span className="text-lg font-bold tabular-nums text-foreground">{breakevenMo !== null ? `${breakevenMo.toFixed(1)} mo` : "—"}</span>
+                </div>
+              </div>
+            </div>
+          </InputPanel>
+        </>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
 // APP SHELL
 // =============================================================================
 export default function App() {
@@ -305,26 +409,17 @@ export default function App() {
         </div>
       </header>
 
-      {/* Shared inputs — borderless surface, more breathing room */}
-      <section className="px-8 py-4 shrink-0 bg-aneko-elev/30">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Shared assumptions</h2>
-          <span className="text-xs text-muted-foreground">Used by both tabs</span>
+      {/* Main: results (left) + assumptions rail (right); stack on small screens — page scrolls on mobile, split panes on lg+ */}
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
+        <div className="w-full min-w-0 lg:flex-1 lg:min-h-0 flex flex-col lg:overflow-hidden">
+          {tab === "board"
+            ? <BoardView state={state} updBoard={updBoard} />
+            : <OpsView state={state} updOps={updOps} />
+          }
         </div>
-        <div className="grid grid-cols-4 gap-6">
-          <InputCard label="Radiologists"    value={state.shared.radiologists}   onChange={(v) => updShared("radiologists", v)} />
-          <InputCard label="Shifts / yr"     value={state.shared.shiftsPerYear}  onChange={(v) => updShared("shiftsPerYear", v)} />
-          <InputCard label="Minutes / shift" value={state.shared.shiftMinutes}   onChange={(v) => updShared("shiftMinutes", v)} />
-          <InputCard label="Rad cost / yr"   value={state.shared.radCostPerYear} onChange={(v) => updShared("radCostPerYear", v)} prefix="$" />
-        </div>
-      </section>
-
-      {/* Tab content */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        {tab === "board"
-          ? <BoardView state={state} updBoard={updBoard} />
-          : <OpsView state={state} updOps={updOps} />
-        }
+        <aside className="shrink-0 w-full lg:w-[min(100%,22rem)] lg:max-w-md border-t lg:border-t-0 lg:border-l border-border bg-aneko-elev/30 lg:overflow-y-auto">
+          <AssumptionsRail tab={tab} state={state} updShared={updShared} updBoard={updBoard} />
+        </aside>
       </div>
     </div>
   );
@@ -334,16 +429,10 @@ export default function App() {
 // BOARD VIEW
 // =============================================================================
 function BoardView({ state, updBoard }) {
-  const { efficiencyGain, reinvestPct, engagementCost, modalities } = state.board;
-
-  const updateModality = (idx, field, value) => {
-    const next = [...modalities];
-    next[idx] = { ...next[idx], [field]: parseFloat(value) || 0 };
-    updBoard("modalities", next);
-  };
+  const { efficiencyGain, reinvestPct } = state.board;
 
   const c = useMemo(() => computeCorporate(state), [state]);
-  const { wRev, wTime, totalMix, minReclaimed, capMin, labMin, addStudiesYr, revenueUnlocked, laborSaved, equivRads, totalValue, breakevenMo, scenarios } = c;
+  const { minReclaimed, capMin, labMin, addStudiesYr, revenueUnlocked, laborSaved, equivRads, totalValue, scenarios } = c;
 
   // Pitch-style: indigo flash when a value just changed, fades back to its semantic color
   const flashTotal = useFlash(totalValue);
@@ -353,15 +442,16 @@ function BoardView({ state, updBoard }) {
   const flashEquiv = useFlash(equivRads);
 
   return (
-    <div className="h-full flex flex-col gap-4 px-8 py-5 min-h-0 overflow-hidden">
+    <div className="flex flex-col gap-4 px-8 py-5 min-h-0 lg:flex-1 lg:h-full lg:overflow-hidden">
       {/* Tab subtitle */}
       <div className="shrink-0">
-        <p className="text-sm text-muted-foreground">
-          Annual financial impact of Aneko-driven read efficiency. Move the sliders below to model different scenarios — outputs update live.
+        <h2 className="text-sm font-semibold text-foreground">Results &amp; scenario</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Annual financial impact of Aneko-driven read efficiency. Move the sliders to model different scenarios — outputs update live.
         </p>
       </div>
 
-      {/* Headline: total value + breakdown (full width) */}
+      {/* Headline: total value + breakdown */}
       <div className="rounded-lg bg-aneko-elev/60 px-5 py-4 shrink-0">
         <div className="text-xs uppercase tracking-widest text-aneko-success font-semibold">Total annual value <span className="text-muted-foreground/70 font-medium normal-case tracking-normal">(AUD)</span></div>
         <div className="flex items-baseline gap-3 mt-1.5">
@@ -389,106 +479,37 @@ function BoardView({ state, updBoard }) {
         </div>
       </div>
 
-      {/* Inputs: drivers + study mix */}
-      <div className="grid grid-cols-12 gap-4 shrink-0 min-h-0">
-        {/* Drivers */}
-        <InputPanel title="Drivers" className="col-span-6">
-          <div>
-            <SliderInput label="Efficiency gain" value={efficiencyGain} min={0} max={10} step={0.1}
-              onChange={(v) => updBoard("efficiencyGain", v)}
-              display={`${efficiencyGain.toFixed(1)}%`}
-              minL="0%" maxL="10%" />
-            <div className="mt-2 flex items-baseline justify-between text-sm">
-              <span className="text-muted-foreground">Reclaimed / shift</span>
-              <span className="tabular-nums font-semibold text-foreground">{minReclaimed.toFixed(1)} min</span>
-            </div>
+      <InputPanel title="Drivers" className="shrink-0">
+        <div>
+          <SliderInput label="Efficiency gain" value={efficiencyGain} min={0} max={10} step={0.1}
+            onChange={(v) => updBoard("efficiencyGain", v)}
+            display={`${efficiencyGain.toFixed(1)}%`}
+            minL="0%" maxL="10%" />
+          <div className="mt-2 flex items-baseline justify-between text-sm">
+            <span className="text-muted-foreground">Reclaimed / shift</span>
+            <span className="tabular-nums font-semibold text-foreground">{minReclaimed.toFixed(1)} min</span>
           </div>
+        </div>
 
-          <div>
-            <SliderInput label="Time used for more reads" value={reinvestPct} min={0} max={100} step={5}
-              onChange={(v) => updBoard("reinvestPct", v)}
-              display={`${reinvestPct}%`}
-              minL="0%" maxL="100%" />
-            <div className="mt-2 space-y-1 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">More reads ({reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{capMin.toFixed(1)} min / shift</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Time off the clock ({100-reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{labMin.toFixed(1)} min / shift</span></div>
-            </div>
+        <div>
+          <SliderInput label="Time used for more reads" value={reinvestPct} min={0} max={100} step={5}
+            onChange={(v) => updBoard("reinvestPct", v)}
+            display={`${reinvestPct}%`}
+            minL="0%" maxL="100%" />
+          <div className="mt-2 space-y-1 text-sm">
+            <div className="flex justify-between"><span className="text-muted-foreground">More reads ({reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{capMin.toFixed(1)} min / shift</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Time off the clock ({100-reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{labMin.toFixed(1)} min / shift</span></div>
           </div>
-
-          <div className="pt-3 border-t border-border/40">
-            <label className="block text-sm font-semibold text-foreground mb-2">Investment cost</label>
-            <div className="flex gap-3 items-center">
-              <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base">$</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={engagementCost}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (v === "" || /^-?\d*\.?\d*$/.test(v)) updBoard("engagementCost", v === "" ? 0 : parseFloat(v) || 0);
-                  }}
-                  onFocus={(e) => e.target.select()}
-                  className="w-full bg-aneko-deep rounded-md pl-7 pr-3 py-2 text-right tabular-nums text-base font-semibold text-foreground ring-1 ring-border hover:ring-primary/50 focus:ring-2 focus:ring-primary focus:outline-none transition"
-                  placeholder="0"
-                />
-              </div>
-              <div className="text-sm text-muted-foreground">Breakeven</div>
-              <div className="text-lg font-bold tabular-nums text-foreground tabular-nums">{breakevenMo !== null ? `${breakevenMo.toFixed(1)} mo` : "—"}</div>
-            </div>
-          </div>
-        </InputPanel>
-
-        {/* Study mix */}
-        <InputPanel title="Study mix" className="col-span-6">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
-                <th className="text-left pb-2 font-semibold">Modality</th>
-                <th className="text-right pb-2 font-semibold pr-2">Volume mix %</th>
-                <th className="text-right pb-2 font-semibold pr-2">Revenue / study</th>
-                <th className="text-right pb-2 font-semibold pr-2">Read minutes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {modalities.map((m, i) => (
-                <tr key={i} className="border-t border-border/40">
-                  <td className="py-1.5 text-foreground font-medium pr-1">{m.name}</td>
-                  <td className="text-right py-1.5"><CellInput value={m.mixPct} onChange={(v) => updateModality(i, "mixPct", v)} /></td>
-                  <td className="text-right py-1.5"><CellInput value={m.revenuePerStudy} onChange={(v) => updateModality(i, "revenuePerStudy", v)} wider /></td>
-                  <td className="text-right py-1.5"><CellInput value={m.readMinutes} onChange={(v) => updateModality(i, "readMinutes", v)} /></td>
-                </tr>
-              ))}
-              {totalMix !== 100 && (
-                <tr className="border-t border-border/40 bg-aneko-warning/10">
-                  <td className="py-2 pl-1 text-aneko-warning text-sm font-semibold uppercase tracking-wide">
-                    {totalMix > 100 ? "Over by" : "Remaining"}
-                  </td>
-                  <td className="text-right py-2 pr-2">
-                    <span className="inline-block w-20 pr-2 text-aneko-warning font-bold tabular-nums text-base">
-                      {totalMix > 100 ? `−${totalMix - 100}%` : `+${100 - totalMix}%`}
-                    </span>
-                  </td>
-                  <td colSpan={2}></td>
-                </tr>
-              )}
-              <tr className="border-t-2 border-border/60 text-base font-semibold">
-                <td className="py-3 text-muted-foreground uppercase tracking-wide text-xs">Weighted avg</td>
-                <td className={`text-right tabular-nums py-3 ${totalMix === 100 ? "text-foreground" : "text-aneko-warning"}`}><span className="inline-block w-20 pr-2">{totalMix}%</span></td>
-                <td className="text-right tabular-nums text-foreground py-3"><span className="inline-block w-24 pr-2">{fmtCurrency(wRev)}</span></td>
-                <td className="text-right tabular-nums text-foreground py-3"><span className="inline-block w-20 pr-2">{wTime.toFixed(1)}</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </InputPanel>
-      </div>
+        </div>
+      </InputPanel>
 
       {/* Scenario sensitivity */}
-      <div className="shrink-0 w-full rounded-lg bg-aneko-elev/60 px-5 py-4">
-        <div className="flex items-baseline justify-between mb-3">
+      <div className="min-h-0 w-full rounded-lg bg-aneko-elev/60 px-5 py-4 flex flex-col overflow-hidden lg:flex-1">
+        <div className="flex items-baseline justify-between mb-3 shrink-0">
           <h2 className="text-base font-semibold text-foreground">Scenario sensitivity</h2>
           <p className="text-xs text-muted-foreground">Current gain highlighted</p>
         </div>
+        <div className="min-h-0 lg:flex-1 overflow-y-auto -mx-1 px-1">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
@@ -518,6 +539,7 @@ function BoardView({ state, updBoard }) {
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
@@ -539,10 +561,11 @@ function OpsView({ state, updOps }) {
   const { rows, rankMap, maxAddr, totals } = o;
 
   return (
-    <div className="h-full flex flex-col gap-4 px-8 py-5 overflow-hidden">
+    <div className="flex flex-col gap-4 px-8 py-5 min-h-0 lg:flex-1 lg:h-full lg:overflow-hidden">
       {/* Tab subtitle */}
       <div className="shrink-0">
-        <p className="text-sm text-muted-foreground">
+        <h2 className="text-sm font-semibold text-foreground">Results &amp; diagnostic</h2>
+        <p className="text-sm text-muted-foreground mt-1">
           A bottom-up view of within-read interruptions. Quantifies how much shift time Aneko can recover by automating the addressable categories below.
         </p>
       </div>
