@@ -278,7 +278,7 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
           <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Shared inputs</h3>
           <span className="text-[11px] text-muted-foreground">Network baseline</span>
         </div>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+        <div className="grid grid-cols-4 gap-x-3">
           <RailInput label="Radiologists" value={state.shared.radiologists} onChange={(v) => updShared("radiologists", v)} />
           <RailInput label="Shifts / yr" value={state.shared.shiftsPerYear} onChange={(v) => updShared("shiftsPerYear", v)} />
           <RailInput label="Minutes / shift" value={state.shared.shiftMinutes} onChange={(v) => updShared("shiftMinutes", v)} />
@@ -474,7 +474,7 @@ export default function App() {
           }
         </div>
         {tab === "board" && (
-          <aside className="shrink-0 w-full lg:w-[32rem] border-t lg:border-t-0 lg:border-l border-border bg-aneko-elev/30">
+          <aside className="shrink-0 w-full lg:w-[38rem] border-t lg:border-t-0 lg:border-l border-border bg-aneko-elev/30">
             <AssumptionsRail tab={tab} state={state} updShared={updShared} updBoard={updBoard} />
           </aside>
         )}
