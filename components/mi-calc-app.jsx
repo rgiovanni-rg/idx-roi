@@ -124,6 +124,8 @@ function computeCorporate(state) {
   const equivRads = (minReclaimed * radiologists) / shiftMinutes;
   const totalValue = revenueUnlocked + laborSaved;
   const breakevenMo = engagementCost > 0 && totalValue > 0 ? engagementCost / (totalValue / 12) : null;
+  const investmentRoiPct =
+    engagementCost > 0 ? ((totalValue - engagementCost) / engagementCost) * 100 : null;
 
   const scenarios = [0.5, 1, 2, 3, 5, 7].map((pct) => {
     const mR = shiftMinutes * (pct / 100);
@@ -139,7 +141,7 @@ function computeCorporate(state) {
     wRev, wTime, totalMix,
     minReclaimed, capMin, labMin,
     addStudiesYr, revenueUnlocked, radCostPerMin, laborSaved, equivRads,
-    totalValue, breakevenMo, scenarios,
+    totalValue, breakevenMo, investmentRoiPct, scenarios,
   };
 }
 
@@ -215,7 +217,8 @@ function exportWorkbook(state) {
     ["Revenue unlocked (AUD)", Math.round(c.revenueUnlocked)],
     ["Realized efficiency value (AUD)", Math.round(c.laborSaved)],
     ["ANNUAL TOTAL VALUE (AUD)", Math.round(c.totalValue)],
-    ["Breakeven (months)", c.breakevenMo !== null ? Number(c.breakevenMo.toFixed(2)) : ""],
+    ["Investment ROI % (year 1)", c.investmentRoiPct !== null ? Number(c.investmentRoiPct.toFixed(2)) : ""],
+    ["Investment payback (months)", c.breakevenMo !== null ? Number(c.breakevenMo.toFixed(2)) : ""],
     ["Equivalent radiologists", Number(c.equivRads.toFixed(2))],
     [],
     ["SENSITIVITY"],
@@ -254,7 +257,7 @@ function exportWorkbook(state) {
 function AssumptionsRail({ tab, state, updShared, updBoard }) {
   const { modalities, engagementCost } = state.board;
   const c = useMemo(() => computeCorporate(state), [state]);
-  const { wRev, wTime, totalMix, breakevenMo } = c;
+  const { wRev, wTime, totalMix, breakevenMo, investmentRoiPct } = c;
 
   const updateModality = (idx, field, value) => {
     const next = [...modalities];
@@ -337,9 +340,9 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
           <section className="rounded-lg bg-aneko-elev/60 px-5 py-4">
             <div className="flex items-baseline justify-between mb-3">
               <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Investment</h3>
-              <span className="text-[11px] text-muted-foreground">Drives breakeven</span>
+              <span className="text-[11px] text-muted-foreground">Year 1 vs. total annual value</span>
             </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3 items-end">
+            <div className="space-y-4">
               <div>
                 <label className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Investment cost</label>
                 <div className="relative">
@@ -358,11 +361,19 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
                   />
                 </div>
               </div>
-              <div>
-                <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Breakeven</div>
-                <div className="tabular-nums font-semibold text-2xl leading-none text-foreground">
-                  {breakevenMo !== null ? `${breakevenMo.toFixed(1)}` : "—"}
-                  {breakevenMo !== null && <span className="text-xs font-medium text-muted-foreground ml-1">mo</span>}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                <div>
+                  <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Investment ROI</div>
+                  <div className="tabular-nums font-semibold text-2xl leading-none text-foreground">
+                    {investmentRoiPct !== null ? `${investmentRoiPct.toFixed(1)}%` : "—"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Investment payback period</div>
+                  <div className="tabular-nums font-semibold text-2xl leading-none text-foreground">
+                    {breakevenMo !== null ? `${breakevenMo.toFixed(1)}` : "—"}
+                    {breakevenMo !== null && <span className="text-xs font-medium text-muted-foreground ml-1">months</span>}
+                  </div>
                 </div>
               </div>
             </div>
