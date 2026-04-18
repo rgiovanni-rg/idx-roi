@@ -269,7 +269,7 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
         <p className="text-xs text-muted-foreground mt-0.5">Inputs driving every number on the left.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <InputCard label="Radiologists" value={state.shared.radiologists} onChange={(v) => updShared("radiologists", v)} />
         <InputCard label="Shifts / yr" value={state.shared.shiftsPerYear} onChange={(v) => updShared("shiftsPerYear", v)} />
         <InputCard label="Minutes / shift" value={state.shared.shiftMinutes} onChange={(v) => updShared("shiftMinutes", v)} />
@@ -382,9 +382,9 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-full font-sans flex flex-col overflow-hidden text-sm text-foreground bg-background">
+    <div className="min-h-screen w-full font-sans flex flex-col text-sm text-foreground bg-background">
       {/* Top bar */}
-      <header className="px-8 h-16 flex items-center justify-between gap-6 bg-aneko-deep shrink-0">
+      <header className="sticky top-0 z-20 px-8 h-16 flex items-center justify-between gap-6 bg-aneko-deep shrink-0 border-b border-border/60">
         <div className="flex items-center gap-4">
           <img src="/logo.svg" alt="Aneko" className="h-7" />
           <div className="h-5 w-px bg-border" />
@@ -409,15 +409,15 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main: results (left) + assumptions rail (right). Desktop: no outer scroll; mobile: allow vertical scroll if needed */}
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row max-lg:overflow-y-auto lg:overflow-hidden">
-        <div className="w-full min-w-0 lg:flex-1 lg:min-h-0 flex flex-col lg:overflow-hidden">
+      {/* Main: results (left) + assumptions rail (right). Whole page scrolls as one — no internal scroll. */}
+      <div className="flex-1 flex flex-col lg:flex-row">
+        <div className="w-full min-w-0 lg:flex-1 flex flex-col">
           {tab === "board"
             ? <BoardView state={state} updBoard={updBoard} />
             : <OpsView state={state} updOps={updOps} />
           }
         </div>
-        <aside className="shrink-0 w-full lg:w-[min(100%,22rem)] lg:max-w-md border-t lg:border-t-0 lg:border-l border-border bg-aneko-elev/30 lg:overflow-y-auto">
+        <aside className="shrink-0 w-full lg:w-[28rem] border-t lg:border-t-0 lg:border-l border-border bg-aneko-elev/30">
           <AssumptionsRail tab={tab} state={state} updShared={updShared} updBoard={updBoard} />
         </aside>
       </div>
@@ -444,8 +444,8 @@ function BoardView({ state, updBoard }) {
   const { radiologists } = state.shared;
 
   return (
-    <div className="w-full h-full overflow-y-auto lg:overflow-hidden">
-      <div className="mx-auto w-full max-w-5xl flex flex-col gap-5 px-6 py-5 lg:h-full lg:overflow-hidden">
+    <div className="w-full">
+      <div className="w-full max-w-5xl flex flex-col gap-5 px-8 py-6">
         {/* Takeaway line */}
         <div className="shrink-0 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <div>
@@ -556,16 +556,16 @@ function BoardView({ state, updBoard }) {
         </section>
 
         {/* Sensitivity — full width of shell */}
-        <section className="rounded-lg bg-aneko-elev/60 flex flex-col min-h-0 lg:flex-1 overflow-hidden px-5 pt-4 pb-3">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 shrink-0 pb-2">
+        <section className="rounded-lg bg-aneko-elev/60 px-5 pt-4 pb-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 pb-2">
             <div>
               <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Efficiency sensitivity</h3>
               <p className="text-[11px] text-muted-foreground mt-0.5">Other efficiency gains you could assume. The highlighted row matches the slider.</p>
             </div>
           </div>
-          <div className="min-h-0 flex-1 overflow-auto">
+          <div className="w-full">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-aneko-elev/95 backdrop-blur z-10">
+              <thead>
                 <tr className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
                   <th className="text-left py-2 pr-2 font-semibold">
                     <span className="md:hidden">Gain</span>
@@ -634,23 +634,23 @@ function OpsView({ state, updOps }) {
   const { rows, rankMap, maxAddr, totals } = o;
 
   return (
-    <div className="flex flex-col gap-3 px-6 py-4 min-h-0 lg:flex-1 lg:h-full lg:overflow-hidden">
-      <div className="shrink-0 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+    <div className="w-full max-w-5xl flex flex-col gap-4 px-8 py-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
         <h2 className="text-sm font-semibold text-foreground">Results &amp; diagnostic</h2>
         <p className="text-xs text-muted-foreground max-w-xl">
           Within-read interruptions · assumptions on the right
         </p>
       </div>
 
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 shrink-0">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         <Tile label="Interrupted / shift" value={`${totals.tot.toFixed(1)} min`} sub={`${totals.totPct.toFixed(1)}% of shift`} />
         <HeroTile label="Addressable / shift" value={`${totals.addr.toFixed(1)} min`} sub={`${totals.addrPct.toFixed(1)}% of shift`} />
         <Tile label="Addressable hrs / yr" value={fmt(totals.yearlyHrs)} sub="network-wide" />
         <Tile label="Equivalent FTE rads" value={totals.equivFTERads.toFixed(1)} sub="recovered annually" />
       </div>
 
-      <div className="flex-1 min-h-0 rounded-lg bg-aneko-elev/60 flex flex-col overflow-hidden border border-border/30">
-        <div className="px-4 pt-3 pb-2 flex flex-wrap items-baseline justify-between gap-2 shrink-0">
+      <div className="rounded-lg bg-aneko-elev/60 flex flex-col border border-border/30">
+        <div className="px-4 pt-3 pb-2 flex flex-wrap items-baseline justify-between gap-2">
           <div className="min-w-0">
             <h2 className="text-sm font-semibold text-foreground">Interruption inventory</h2>
             <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
@@ -659,9 +659,9 @@ function OpsView({ state, updOps }) {
           </div>
           <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold whitespace-nowrap">Per rad / shift</div>
         </div>
-        <div className="flex-1 min-h-0 overflow-auto">
+        <div className="w-full">
           <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-aneko-elev/95 backdrop-blur z-10">
+            <thead>
               <tr className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
                 <th className="text-center px-2 py-2 w-10">#</th>
                 <th className="text-left px-2 py-2">Category</th>
