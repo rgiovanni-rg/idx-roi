@@ -414,12 +414,14 @@ export default function App() {
         <div className="w-full min-w-0 lg:flex-1 flex flex-col">
           {tab === "board"
             ? <BoardView state={state} updBoard={updBoard} />
-            : <OpsView state={state} updOps={updOps} />
+            : <OpsView state={state} updOps={updOps} updShared={updShared} />
           }
         </div>
-        <aside className="shrink-0 w-full lg:w-[28rem] border-t lg:border-t-0 lg:border-l border-border bg-aneko-elev/30">
-          <AssumptionsRail tab={tab} state={state} updShared={updShared} updBoard={updBoard} />
-        </aside>
+        {tab === "board" && (
+          <aside className="shrink-0 w-full lg:w-[28rem] border-t lg:border-t-0 lg:border-l border-border bg-aneko-elev/30">
+            <AssumptionsRail tab={tab} state={state} updShared={updShared} updBoard={updBoard} />
+          </aside>
+        )}
       </div>
     </div>
   );
@@ -621,7 +623,7 @@ function BoardView({ state, updBoard }) {
 // =============================================================================
 // OPERATIONAL DIAGNOSTIC VIEW
 // =============================================================================
-function OpsView({ state, updOps }) {
+function OpsView({ state, updOps, updShared }) {
   const { interruptions } = state.ops;
 
   const updateRow = (idx, field, value) => {
@@ -638,7 +640,7 @@ function OpsView({ state, updOps }) {
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
         <h2 className="text-sm font-semibold text-foreground">Results &amp; diagnostic</h2>
         <p className="text-xs text-muted-foreground max-w-xl">
-          Within-read interruptions · assumptions on the right
+          Within-read interruptions · edit assumptions inline below
         </p>
       </div>
 
@@ -648,6 +650,19 @@ function OpsView({ state, updOps }) {
         <Tile label="Addressable hrs / yr" value={fmt(totals.yearlyHrs)} sub="network-wide" />
         <Tile label="Equivalent FTE rads" value={totals.equivFTERads.toFixed(1)} sub="recovered annually" />
       </div>
+
+      <section className="rounded-lg bg-aneko-elev/60 px-5 py-4">
+        <div className="flex items-baseline justify-between mb-3">
+          <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Assumptions</h3>
+          <span className="text-[11px] text-muted-foreground">Inputs driving every metric above</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <InputCard label="Radiologists" value={state.shared.radiologists} onChange={(v) => updShared("radiologists", v)} />
+          <InputCard label="Shifts / yr" value={state.shared.shiftsPerYear} onChange={(v) => updShared("shiftsPerYear", v)} />
+          <InputCard label="Minutes / shift" value={state.shared.shiftMinutes} onChange={(v) => updShared("shiftMinutes", v)} />
+          <InputCard label="Rad cost / yr" value={state.shared.radCostPerYear} onChange={(v) => updShared("radCostPerYear", v)} prefix="$" />
+        </div>
+      </section>
 
       <div className="rounded-lg bg-aneko-elev/60 flex flex-col border border-border/30">
         <div className="px-4 pt-3 pb-2 flex flex-wrap items-baseline justify-between gap-2">
