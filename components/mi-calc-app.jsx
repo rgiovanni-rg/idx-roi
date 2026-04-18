@@ -448,40 +448,46 @@ function BoardView({ state, updBoard }) {
         <p className="text-xs text-muted-foreground">Outputs · tune assumptions in the right column</p>
       </div>
 
-      {/* Compact headline: total + KPIs in one band */}
-      <div className="rounded-lg bg-aneko-elev/60 px-4 py-3 shrink-0">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-6">
-          <div className="shrink-0 lg:min-w-[12rem]">
-            <div className="text-[10px] uppercase tracking-widest text-aneko-success font-semibold">
+      {/* Headline: (1) AUD flow to total · (2) volume & capacity */}
+      <div className="rounded-lg bg-aneko-elev/60 px-4 py-3 shrink-0 space-y-3">
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Financial impact (AUD)</div>
+        <div className="flex flex-wrap items-end gap-x-1.5 sm:gap-x-2 gap-y-3">
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Revenue unlocked</div>
+            <div className={`tabular-nums font-bold text-3xl leading-none mt-1 transition-colors duration-500 ${flashRev ? "text-primary" : "text-foreground"}`}>{fmtCurrency(revenueUnlocked)}</div>
+          </div>
+          <span className="text-2xl text-muted-foreground/80 font-light pb-1.5 select-none shrink-0" aria-hidden>+</span>
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Labor value reclaimed</div>
+            <div className={`tabular-nums font-bold text-3xl leading-none mt-1 transition-colors duration-500 ${flashLabor ? "text-primary" : "text-foreground"}`}>{fmtCurrency(laborSaved)}</div>
+          </div>
+          <span className="text-2xl text-muted-foreground/80 font-light pb-1.5 select-none shrink-0" aria-hidden>=</span>
+          <div className="min-w-0 sm:border-l border-border/50 sm:pl-4 sm:ml-1 flex-1 min-w-[10rem]">
+            <div className="text-[10px] uppercase tracking-widest text-aneko-success font-semibold leading-tight">
               Total annual value <span className="text-muted-foreground/70 font-medium normal-case tracking-normal">(AUD)</span>
             </div>
-            <div className={`tabular-nums font-bold text-3xl leading-tight mt-0.5 transition-colors duration-500 ${flashTotal ? "text-primary" : "text-aneko-success"}`}>{fmtCurrency(totalValue)}</div>
-            <div className="text-xs text-muted-foreground mt-0.5">{efficiencyGain.toFixed(1)}% efficiency gain</div>
+            <div className={`tabular-nums font-bold text-4xl leading-none mt-1 transition-colors duration-500 ${flashTotal ? "text-primary" : "text-aneko-success"}`}>{fmtCurrency(totalValue)}</div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-2 flex-1 min-w-0 border-t border-border/50 pt-3 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
-            <div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Revenue unlocked</div>
-              <div className={`tabular-nums font-bold text-lg mt-0.5 transition-colors duration-500 ${flashRev ? "text-primary" : "text-foreground"}`}>{fmtCurrency(revenueUnlocked)}</div>
-            </div>
-            <div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Studies / yr</div>
-              <div className={`tabular-nums font-bold text-lg mt-0.5 transition-colors duration-500 ${flashStudies ? "text-primary" : "text-foreground"}`}>{fmt(addStudiesYr)}</div>
-            </div>
-            <div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Labor reclaimed</div>
-              <div className={`tabular-nums font-bold text-lg mt-0.5 transition-colors duration-500 ${flashLabor ? "text-primary" : "text-foreground"}`}>{fmtCurrency(laborSaved)}</div>
-            </div>
-            <div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Equiv. rads</div>
-              <div className={`tabular-nums font-bold text-lg mt-0.5 transition-colors duration-500 ${flashEquiv ? "text-primary" : "text-foreground"}`}>{equivRads.toFixed(1)}</div>
-            </div>
+        </div>
+        <div className="text-xs text-muted-foreground">{efficiencyGain.toFixed(1)}% efficiency gain</div>
+
+        <div className="border-t border-border/50 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Additional studies / yr</div>
+            <div className={`tabular-nums font-bold text-3xl leading-none mt-1 transition-colors duration-500 ${flashStudies ? "text-primary" : "text-foreground"}`}>{fmt(addStudiesYr)}</div>
+            <div className="text-[11px] text-muted-foreground mt-1">Capacity from reinvested read time</div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Equivalent radiologists</div>
+            <div className={`tabular-nums font-bold text-3xl leading-none mt-1 transition-colors duration-500 ${flashEquiv ? "text-primary" : "text-foreground"}`}>{equivRads.toFixed(1)}</div>
+            <div className="text-[11px] text-muted-foreground mt-1">Net new clinical capacity (headcount)</div>
           </div>
         </div>
       </div>
 
-      {/* Drivers + scenario side-by-side — avoids a tall scrolling left column */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-3 items-stretch">
-        <InputPanel title="Drivers" dense className="min-h-0 flex flex-col">
+      {/* Dials first, scenario sensitivity directly below */}
+      <div className="flex-1 min-h-0 flex flex-col gap-3 overflow-hidden">
+        <InputPanel title="Drivers" dense className="shrink-0">
           <div>
             <SliderInput compact label="Efficiency gain" value={efficiencyGain} min={0} max={10} step={0.1}
               onChange={(v) => updBoard("efficiencyGain", v)}
@@ -505,22 +511,22 @@ function BoardView({ state, updBoard }) {
           </div>
         </InputPanel>
 
-        <div className="rounded-lg bg-aneko-elev/60 flex flex-col min-h-0 px-3 pt-2 pb-2">
+        <div className="rounded-lg bg-aneko-elev/60 flex flex-col min-h-0 flex-1 overflow-hidden px-3 pt-2 pb-2">
           <div className="flex items-baseline justify-between gap-2 shrink-0 pb-1.5">
             <span className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Scenario sensitivity</span>
             <span className="text-[10px] text-muted-foreground">Current gain highlighted</span>
           </div>
-          <div className="min-h-0 overflow-x-auto">
-            <table className="w-full text-[11px] leading-tight">
+          <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
+            <table className="w-full text-sm leading-tight">
               <thead>
                 <tr className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-                  <th className="text-left pb-1 pr-1 font-semibold">Gain</th>
-                  <th className="text-right pb-1 px-0.5 font-semibold">Recl.</th>
-                  <th className="text-right pb-1 px-0.5 font-semibold">Studies</th>
-                  <th className="text-right pb-1 px-0.5 font-semibold">Rev.</th>
-                  <th className="text-right pb-1 px-0.5 font-semibold">Labor</th>
-                  <th className="text-right pb-1 px-0.5 font-semibold">Total</th>
-                  <th className="text-right pb-1 pl-0.5 font-semibold">Eq.</th>
+                  <th className="text-left pb-2 pr-1 font-semibold">Gain</th>
+                  <th className="text-right pb-2 px-0.5 font-semibold">Recl.</th>
+                  <th className="text-right pb-2 px-0.5 font-semibold">Studies</th>
+                  <th className="text-right pb-2 px-0.5 font-semibold">Rev.</th>
+                  <th className="text-right pb-2 px-0.5 font-semibold">Labor</th>
+                  <th className="text-right pb-2 px-1 font-semibold text-aneko-success">Total</th>
+                  <th className="text-right pb-2 pl-0.5 font-semibold">Eq.</th>
                 </tr>
               </thead>
               <tbody>
@@ -528,13 +534,13 @@ function BoardView({ state, updBoard }) {
                   const active = Math.abs(s.pct - efficiencyGain) < 0.05;
                   return (
                     <tr key={s.pct} className={`border-t border-border/40 ${active ? "bg-primary/5" : ""}`}>
-                      <td className={`py-1 pr-1 ${active ? "font-semibold text-primary" : "text-foreground"}`}>{s.pct}%</td>
-                      <td className="text-right tabular-nums py-1 px-0.5 text-foreground">{s.mR.toFixed(1)}</td>
-                      <td className="text-right tabular-nums py-1 px-0.5 text-foreground">{fmt(s.ast)}</td>
-                      <td className="text-right tabular-nums py-1 px-0.5 text-foreground">{fmtShort(s.rev)}</td>
-                      <td className="text-right tabular-nums py-1 px-0.5 text-foreground">{fmtShort(s.lab)}</td>
-                      <td className={`text-right tabular-nums py-1 px-0.5 font-semibold ${active ? "text-aneko-success" : "text-foreground"}`}>{fmtShort(s.total)}</td>
-                      <td className="text-right tabular-nums py-1 pl-0.5 text-foreground">{s.equiv.toFixed(1)}</td>
+                      <td className={`py-2 pr-1 text-sm ${active ? "font-semibold text-primary" : "text-foreground"}`}>{s.pct}%</td>
+                      <td className="text-right tabular-nums py-2 px-0.5 text-foreground text-sm">{s.mR.toFixed(1)}</td>
+                      <td className="text-right tabular-nums py-2 px-0.5 text-foreground text-sm">{fmt(s.ast)}</td>
+                      <td className="text-right tabular-nums py-2 px-0.5 text-foreground text-sm">{fmtShort(s.rev)}</td>
+                      <td className="text-right tabular-nums py-2 px-0.5 text-foreground text-sm">{fmtShort(s.lab)}</td>
+                      <td className={`text-right tabular-nums py-2 px-1 font-bold text-base ${active ? "text-aneko-success" : "text-foreground"}`}>{fmtShort(s.total)}</td>
+                      <td className="text-right tabular-nums py-2 pl-0.5 text-foreground text-sm">{s.equiv.toFixed(1)}</td>
                     </tr>
                   );
                 })}
@@ -637,13 +643,13 @@ function OpsView({ state, updOps }) {
                   </tr>
                 );
               })}
-              <tr className="font-semibold border-t-2 border-border/80 text-sm">
+              <tr className="border-t-2 border-border/80">
                 <td></td>
-                <td className="px-2 py-2.5 text-muted-foreground uppercase tracking-wide text-[10px]" colSpan={2}>Total</td>
+                <td className="px-2 py-3 text-muted-foreground uppercase tracking-wide text-[10px] font-semibold" colSpan={2}>Total</td>
                 <td></td><td></td>
-                <td className="px-2 py-2.5 text-right tabular-nums text-foreground">{totals.tot.toFixed(1)}</td>
+                <td className="px-2 py-3 text-right tabular-nums font-bold text-xl text-foreground">{totals.tot.toFixed(1)}</td>
                 <td></td>
-                <td className="px-3 py-2.5 text-right tabular-nums text-aneko-success">{totals.addr.toFixed(1)}</td>
+                <td className="px-3 py-3 text-right tabular-nums font-bold text-xl text-aneko-success">{totals.addr.toFixed(1)}</td>
               </tr>
             </tbody>
           </table>
@@ -743,7 +749,7 @@ function Tile({ label, value, sub, valueTone }) {
     <div className="rounded-lg bg-aneko-elev/60 px-3 py-2.5">
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold truncate">{label}</div>
       <div className="flex items-baseline justify-between gap-2 mt-1">
-        <div className={`text-2xl font-bold tabular-nums leading-none ${valueClass}`}>{value}</div>
+        <div className={`text-3xl font-bold tabular-nums leading-none ${valueClass}`}>{value}</div>
         {sub && <div className="text-xs text-muted-foreground tabular-nums">{sub}</div>}
       </div>
     </div>
@@ -756,7 +762,7 @@ function HeroTile({ label, value, sub }) {
     <div className="rounded-lg bg-aneko-elev/60 ring-1 ring-aneko-success/30 px-3 py-2.5">
       <div className="text-[10px] uppercase tracking-widest text-aneko-success font-semibold truncate">{label}</div>
       <div className="flex items-baseline justify-between gap-2 mt-1">
-        <div className="text-2xl font-bold tabular-nums leading-none text-aneko-success">{value}</div>
+        <div className="text-3xl font-bold tabular-nums leading-none text-aneko-success">{value}</div>
         {sub && <div className="text-xs text-muted-foreground tabular-nums">{sub}</div>}
       </div>
     </div>
