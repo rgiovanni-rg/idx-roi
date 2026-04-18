@@ -552,14 +552,11 @@ function BoardView({ state, updBoard }) {
                   </th>
                   <td className={`py-2.5 text-right tabular-nums font-semibold text-2xl transition-colors duration-500 ${flashLabor ? "text-primary" : "text-foreground"}`}>{fmtCurrency(laborSaved)}</td>
                 </tr>
-                <tr className="border-t-2 border-border/70 bg-aneko-success/5">
-                  <th scope="row" className="py-3 text-left font-semibold text-foreground uppercase text-[11px] tracking-widest">
-                    = Total annual value
-                  </th>
-                  <td className={`py-3 text-right tabular-nums font-bold text-2xl transition-colors duration-500 ${flashTotal ? "text-primary" : "text-aneko-success"}`}>{fmtCurrency(totalValue)}</td>
-                </tr>
               </tbody>
             </table>
+            <p className="text-[11px] text-muted-foreground mt-3 pt-3 border-t border-border/40">
+              These two components sum to the total annual value at the top.
+            </p>
           </section>
 
           {/* Capacity impact */}
