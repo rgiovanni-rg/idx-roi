@@ -210,16 +210,16 @@ function exportWorkbook(state) {
     ["OUTPUTS"],
     ["Minutes reclaimed per shift", Number(c.minReclaimed.toFixed(2))],
     ["Capacity minutes (to reading)", Number(c.capMin.toFixed(2))],
-    ["Labor minutes (banked)", Number(c.labMin.toFixed(2))],
+    ["Labor minutes (realized efficiency)", Number(c.labMin.toFixed(2))],
     ["Additional studies per year", Math.round(c.addStudiesYr)],
     ["Revenue unlocked (AUD)", Math.round(c.revenueUnlocked)],
-    ["Labor value reclaimed (AUD)", Math.round(c.laborSaved)],
+    ["Realized efficiency value (AUD)", Math.round(c.laborSaved)],
     ["ANNUAL TOTAL VALUE (AUD)", Math.round(c.totalValue)],
     ["Breakeven (months)", c.breakevenMo !== null ? Number(c.breakevenMo.toFixed(2)) : ""],
     ["Equivalent radiologists", Number(c.equivRads.toFixed(2))],
     [],
     ["SENSITIVITY"],
-    ["Efficiency gain %", "Reclaimed / shift (min)", "Additional studies / yr", "Revenue unlocked (AUD)", "Labor reclaimed (AUD)", "Total annual value (AUD)", "Equivalent rads"],
+    ["Efficiency gain %", "Reclaimed / shift (min)", "Additional studies / yr", "Revenue unlocked (AUD)", "Realized efficiency (AUD)", "Total annual value (AUD)", "Equivalent rads"],
     ...c.scenarios.map(s => [s.pct, Number(s.mR.toFixed(2)), Math.round(s.ast), Math.round(s.rev), Math.round(s.lab), Math.round(s.total), Number(s.equiv.toFixed(2))]),
   ];
   const corpSheet = XLSX.utils.aoa_to_sheet(corp);
@@ -524,7 +524,7 @@ function BoardView({ state, updBoard }) {
           </div>
           <div className={`tabular-nums font-bold text-5xl leading-none mt-2 transition-colors duration-500 ${flashTotal ? "text-primary" : "text-aneko-success"}`}>{fmtCurrency(totalValue)}</div>
           <p className="text-xs text-muted-foreground mt-2 max-w-2xl">
-            Revenue from the extra studies your team can read, plus the dollar value of time handed back. Assumptions drive every number — edit them in the right column.
+            Revenue from the extra studies your team can read, plus the dollar value of realized efficiency. Assumptions drive every number — edit them in the right column.
           </p>
         </section>
 
@@ -547,8 +547,8 @@ function BoardView({ state, updBoard }) {
                 </tr>
                 <tr className="border-t border-border/40">
                   <th scope="row" className="py-2.5 text-left font-medium text-foreground">
-                    + Labor value reclaimed
-                    <span className="block text-[11px] font-normal text-muted-foreground">Dollar value of time banked off the clock</span>
+                    + Realized efficiency
+                    <span className="block text-[11px] font-normal text-muted-foreground">Dollar value of efficiency gains not reinvested in additional reads</span>
                   </th>
                   <td className={`py-2.5 text-right tabular-nums font-semibold text-2xl transition-colors duration-500 ${flashLabor ? "text-primary" : "text-foreground"}`}>{fmtCurrency(laborSaved)}</td>
                 </tr>
@@ -604,7 +604,7 @@ function BoardView({ state, updBoard }) {
                 minL="0%" maxL="100%" />
               <div className="mt-2 space-y-0.5 text-xs">
                 <div className="flex justify-between gap-2"><span className="text-muted-foreground">More reads ({reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{capMin.toFixed(1)} min / shift</span></div>
-                <div className="flex justify-between gap-2"><span className="text-muted-foreground">Off the clock ({100-reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{labMin.toFixed(1)} min / shift</span></div>
+                <div className="flex justify-between gap-2"><span className="text-muted-foreground">Realized efficiency ({100-reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{labMin.toFixed(1)} min / shift</span></div>
               </div>
             </div>
           </div>
@@ -635,7 +635,10 @@ function BoardView({ state, updBoard }) {
                     <span className="hidden md:inline">Studies / yr</span>
                   </th>
                   <th className="text-right py-2 px-2 font-semibold">Revenue</th>
-                  <th className="text-right py-2 px-2 font-semibold">Labor</th>
+                  <th className="text-right py-2 px-2 font-semibold">
+                    <span className="md:hidden">Real.</span>
+                    <span className="hidden md:inline">Realized efficiency</span>
+                  </th>
                   <th className="text-right py-2 px-2 font-semibold text-aneko-success">Total</th>
                   <th className="text-right py-2 pl-2 font-semibold">
                     <span className="md:hidden">Eq.</span>
