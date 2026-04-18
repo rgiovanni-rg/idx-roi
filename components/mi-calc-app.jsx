@@ -124,8 +124,8 @@ function computeCorporate(state) {
   const equivRads = (minReclaimed * radiologists) / shiftMinutes;
   const totalValue = revenueUnlocked + laborSaved;
   const breakevenMo = engagementCost > 0 && totalValue > 0 ? engagementCost / (totalValue / 12) : null;
-  const investmentRoiPct =
-    engagementCost > 0 ? ((totalValue - engagementCost) / engagementCost) * 100 : null;
+  const investmentRoiMultiple =
+    engagementCost > 0 ? totalValue / engagementCost : null;
 
   const scenarios = [0.5, 1, 2, 3, 5, 7].map((pct) => {
     const mR = shiftMinutes * (pct / 100);
@@ -141,7 +141,7 @@ function computeCorporate(state) {
     wRev, wTime, totalMix,
     minReclaimed, capMin, labMin,
     addStudiesYr, revenueUnlocked, radCostPerMin, laborSaved, equivRads,
-    totalValue, breakevenMo, investmentRoiPct, scenarios,
+    totalValue, breakevenMo, investmentRoiMultiple, scenarios,
   };
 }
 
@@ -217,7 +217,7 @@ function exportWorkbook(state) {
     ["Revenue unlocked (AUD)", Math.round(c.revenueUnlocked)],
     ["Realized efficiency value (AUD)", Math.round(c.laborSaved)],
     ["ANNUAL TOTAL VALUE (AUD)", Math.round(c.totalValue)],
-    ["Investment ROI % (year 1)", c.investmentRoiPct !== null ? Number(c.investmentRoiPct.toFixed(2)) : ""],
+    ["Investment ROI (× annual value)", c.investmentRoiMultiple !== null ? Number(c.investmentRoiMultiple.toFixed(2)) : ""],
     ["Investment payback (months)", c.breakevenMo !== null ? Number(c.breakevenMo.toFixed(2)) : ""],
     ["Equivalent radiologists", Number(c.equivRads.toFixed(2))],
     [],
@@ -257,7 +257,7 @@ function exportWorkbook(state) {
 function AssumptionsRail({ tab, state, updShared, updBoard }) {
   const { modalities, engagementCost } = state.board;
   const c = useMemo(() => computeCorporate(state), [state]);
-  const { wRev, wTime, totalMix, breakevenMo, investmentRoiPct } = c;
+  const { wRev, wTime, totalMix, breakevenMo, investmentRoiMultiple } = c;
 
   const updateModality = (idx, field, value) => {
     const next = [...modalities];
@@ -365,7 +365,7 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
                 <div>
                   <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Investment ROI</div>
                   <div className="tabular-nums font-semibold text-2xl leading-none text-foreground">
-                    {investmentRoiPct !== null ? `${investmentRoiPct.toFixed(1)}%` : "—"}
+                    {investmentRoiMultiple !== null ? `${investmentRoiMultiple.toFixed(1)}×` : "—"}
                   </div>
                 </div>
                 <div>
