@@ -263,10 +263,10 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
   };
 
   return (
-    <div className="px-5 py-5 space-y-6">
+    <div className="px-4 py-4 space-y-4">
       <div>
         <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Model assumptions</h2>
-        <p className="text-xs text-muted-foreground mt-1">Used by both tabs</p>
+        <p className="text-xs text-muted-foreground mt-0.5">Used by both tabs</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
@@ -409,8 +409,8 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main: results (left) + assumptions rail (right); stack on small screens — page scrolls on mobile, split panes on lg+ */}
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
+      {/* Main: results (left) + assumptions rail (right). Desktop: no outer scroll; mobile: allow vertical scroll if needed */}
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row max-lg:overflow-y-auto lg:overflow-hidden">
         <div className="w-full min-w-0 lg:flex-1 lg:min-h-0 flex flex-col lg:overflow-hidden">
           {tab === "board"
             ? <BoardView state={state} updBoard={updBoard} />
@@ -442,103 +442,105 @@ function BoardView({ state, updBoard }) {
   const flashEquiv = useFlash(equivRads);
 
   return (
-    <div className="flex flex-col gap-4 px-8 py-5 min-h-0 lg:flex-1 lg:h-full lg:overflow-hidden">
-      {/* Tab subtitle */}
-      <div className="shrink-0">
+    <div className="flex flex-col gap-3 px-6 py-4 min-h-0 lg:flex-1 lg:h-full lg:overflow-hidden">
+      <div className="shrink-0 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
         <h2 className="text-sm font-semibold text-foreground">Results &amp; scenario</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Annual financial impact of Aneko-driven read efficiency. Move the sliders to model different scenarios — outputs update live.
-        </p>
+        <p className="text-xs text-muted-foreground">Outputs · tune assumptions in the right column</p>
       </div>
 
-      {/* Headline: total value + breakdown */}
-      <div className="rounded-lg bg-aneko-elev/60 px-5 py-4 shrink-0">
-        <div className="text-xs uppercase tracking-widest text-aneko-success font-semibold">Total annual value <span className="text-muted-foreground/70 font-medium normal-case tracking-normal">(AUD)</span></div>
-        <div className="flex items-baseline gap-3 mt-1.5">
-          <div className={`tabular-nums font-bold text-4xl leading-none transition-colors duration-500 ${flashTotal ? "text-primary" : "text-aneko-success"}`}>{fmtCurrency(totalValue)}</div>
-          <div className="text-sm text-muted-foreground">at {efficiencyGain.toFixed(1)}% efficiency gain</div>
-        </div>
-        <div className="grid grid-cols-4 gap-4 mt-3 pt-3 border-t border-border/60">
-          <div>
-            <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Revenue unlocked</div>
-            <div className={`tabular-nums font-bold text-2xl mt-1 transition-colors duration-500 ${flashRev ? "text-primary" : "text-foreground"}`}>{fmtCurrency(revenueUnlocked)}</div>
+      {/* Compact headline: total + KPIs in one band */}
+      <div className="rounded-lg bg-aneko-elev/60 px-4 py-3 shrink-0">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-6">
+          <div className="shrink-0 lg:min-w-[12rem]">
+            <div className="text-[10px] uppercase tracking-widest text-aneko-success font-semibold">
+              Total annual value <span className="text-muted-foreground/70 font-medium normal-case tracking-normal">(AUD)</span>
+            </div>
+            <div className={`tabular-nums font-bold text-3xl leading-tight mt-0.5 transition-colors duration-500 ${flashTotal ? "text-primary" : "text-aneko-success"}`}>{fmtCurrency(totalValue)}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">{efficiencyGain.toFixed(1)}% efficiency gain</div>
           </div>
-          <div>
-            <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Additional studies / yr</div>
-            <div className={`tabular-nums font-bold text-2xl mt-1 transition-colors duration-500 ${flashStudies ? "text-primary" : "text-foreground"}`}>{fmt(addStudiesYr)}</div>
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Labor value reclaimed</div>
-            <div className={`tabular-nums font-bold text-2xl mt-1 transition-colors duration-500 ${flashLabor ? "text-primary" : "text-foreground"}`}>{fmtCurrency(laborSaved)}</div>
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Equivalent radiologists</div>
-            <div className={`tabular-nums font-bold text-2xl mt-1 transition-colors duration-500 ${flashEquiv ? "text-primary" : "text-foreground"}`}>{equivRads.toFixed(1)}</div>
-            <div className="text-[11px] text-muted-foreground mt-0.5">Net new clinical capacity</div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-2 flex-1 min-w-0 border-t border-border/50 pt-3 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Revenue unlocked</div>
+              <div className={`tabular-nums font-bold text-lg mt-0.5 transition-colors duration-500 ${flashRev ? "text-primary" : "text-foreground"}`}>{fmtCurrency(revenueUnlocked)}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Studies / yr</div>
+              <div className={`tabular-nums font-bold text-lg mt-0.5 transition-colors duration-500 ${flashStudies ? "text-primary" : "text-foreground"}`}>{fmt(addStudiesYr)}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Labor reclaimed</div>
+              <div className={`tabular-nums font-bold text-lg mt-0.5 transition-colors duration-500 ${flashLabor ? "text-primary" : "text-foreground"}`}>{fmtCurrency(laborSaved)}</div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Equiv. rads</div>
+              <div className={`tabular-nums font-bold text-lg mt-0.5 transition-colors duration-500 ${flashEquiv ? "text-primary" : "text-foreground"}`}>{equivRads.toFixed(1)}</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <InputPanel title="Drivers" className="shrink-0">
-        <div>
-          <SliderInput label="Efficiency gain" value={efficiencyGain} min={0} max={10} step={0.1}
-            onChange={(v) => updBoard("efficiencyGain", v)}
-            display={`${efficiencyGain.toFixed(1)}%`}
-            minL="0%" maxL="10%" />
-          <div className="mt-2 flex items-baseline justify-between text-sm">
-            <span className="text-muted-foreground">Reclaimed / shift</span>
-            <span className="tabular-nums font-semibold text-foreground">{minReclaimed.toFixed(1)} min</span>
+      {/* Drivers + scenario side-by-side — avoids a tall scrolling left column */}
+      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-3 items-stretch">
+        <InputPanel title="Drivers" dense className="min-h-0 flex flex-col">
+          <div>
+            <SliderInput compact label="Efficiency gain" value={efficiencyGain} min={0} max={10} step={0.1}
+              onChange={(v) => updBoard("efficiencyGain", v)}
+              display={`${efficiencyGain.toFixed(1)}%`}
+              minL="0%" maxL="10%" />
+            <div className="mt-1 flex items-baseline justify-between text-xs">
+              <span className="text-muted-foreground">Reclaimed / shift</span>
+              <span className="tabular-nums font-semibold text-foreground">{minReclaimed.toFixed(1)} min</span>
+            </div>
           </div>
-        </div>
 
-        <div>
-          <SliderInput label="Time used for more reads" value={reinvestPct} min={0} max={100} step={5}
-            onChange={(v) => updBoard("reinvestPct", v)}
-            display={`${reinvestPct}%`}
-            minL="0%" maxL="100%" />
-          <div className="mt-2 space-y-1 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">More reads ({reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{capMin.toFixed(1)} min / shift</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Time off the clock ({100-reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{labMin.toFixed(1)} min / shift</span></div>
+          <div>
+            <SliderInput compact label="Time used for more reads" value={reinvestPct} min={0} max={100} step={5}
+              onChange={(v) => updBoard("reinvestPct", v)}
+              display={`${reinvestPct}%`}
+              minL="0%" maxL="100%" />
+            <div className="mt-1 space-y-0.5 text-xs">
+              <div className="flex justify-between gap-2"><span className="text-muted-foreground truncate">More reads ({reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground shrink-0">{capMin.toFixed(1)} min</span></div>
+              <div className="flex justify-between gap-2"><span className="text-muted-foreground truncate">Off the clock ({100-reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground shrink-0">{labMin.toFixed(1)} min</span></div>
+            </div>
           </div>
-        </div>
-      </InputPanel>
+        </InputPanel>
 
-      {/* Scenario sensitivity */}
-      <div className="min-h-0 w-full rounded-lg bg-aneko-elev/60 px-5 py-4 flex flex-col overflow-hidden lg:flex-1">
-        <div className="flex items-baseline justify-between mb-3 shrink-0">
-          <h2 className="text-base font-semibold text-foreground">Scenario sensitivity</h2>
-          <p className="text-xs text-muted-foreground">Current gain highlighted</p>
-        </div>
-        <div className="min-h-0 lg:flex-1 overflow-y-auto -mx-1 px-1">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
-              <th className="text-left pb-2 font-semibold">Efficiency gain</th>
-              <th className="text-right pb-2 font-semibold">Reclaimed / shift</th>
-              <th className="text-right pb-2 font-semibold">Additional studies / yr</th>
-              <th className="text-right pb-2 font-semibold">Revenue unlocked</th>
-              <th className="text-right pb-2 font-semibold">Labor reclaimed</th>
-              <th className="text-right pb-2 font-semibold">Total annual value</th>
-              <th className="text-right pb-2 font-semibold">Equivalent rads</th>
-            </tr>
-          </thead>
-          <tbody>
-            {scenarios.map((s) => {
-              const active = Math.abs(s.pct - efficiencyGain) < 0.05;
-              return (
-                <tr key={s.pct} className={`border-t border-border/40 ${active ? "bg-primary/5" : ""}`}>
-                  <td className={`py-2.5 ${active ? "font-semibold text-primary" : "text-foreground"}`}>{s.pct}%</td>
-                  <td className="text-right tabular-nums py-2.5 text-foreground">{s.mR.toFixed(1)}</td>
-                  <td className="text-right tabular-nums py-2.5 text-foreground">{fmt(s.ast)}</td>
-                  <td className="text-right tabular-nums py-2.5 text-foreground">{fmtShort(s.rev)}</td>
-                  <td className="text-right tabular-nums py-2.5 text-foreground">{fmtShort(s.lab)}</td>
-                  <td className={`text-right tabular-nums py-2.5 font-semibold ${active ? "text-aneko-success" : "text-foreground"}`}>{fmtShort(s.total)}</td>
-                  <td className="text-right tabular-nums py-2.5 text-foreground">{s.equiv.toFixed(1)}</td>
+        <div className="rounded-lg bg-aneko-elev/60 flex flex-col min-h-0 px-3 pt-2 pb-2">
+          <div className="flex items-baseline justify-between gap-2 shrink-0 pb-1.5">
+            <span className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Scenario sensitivity</span>
+            <span className="text-[10px] text-muted-foreground">Current gain highlighted</span>
+          </div>
+          <div className="min-h-0 overflow-x-auto">
+            <table className="w-full text-[11px] leading-tight">
+              <thead>
+                <tr className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+                  <th className="text-left pb-1 pr-1 font-semibold">Gain</th>
+                  <th className="text-right pb-1 px-0.5 font-semibold">Recl.</th>
+                  <th className="text-right pb-1 px-0.5 font-semibold">Studies</th>
+                  <th className="text-right pb-1 px-0.5 font-semibold">Rev.</th>
+                  <th className="text-right pb-1 px-0.5 font-semibold">Labor</th>
+                  <th className="text-right pb-1 px-0.5 font-semibold">Total</th>
+                  <th className="text-right pb-1 pl-0.5 font-semibold">Eq.</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {scenarios.map((s) => {
+                  const active = Math.abs(s.pct - efficiencyGain) < 0.05;
+                  return (
+                    <tr key={s.pct} className={`border-t border-border/40 ${active ? "bg-primary/5" : ""}`}>
+                      <td className={`py-1 pr-1 ${active ? "font-semibold text-primary" : "text-foreground"}`}>{s.pct}%</td>
+                      <td className="text-right tabular-nums py-1 px-0.5 text-foreground">{s.mR.toFixed(1)}</td>
+                      <td className="text-right tabular-nums py-1 px-0.5 text-foreground">{fmt(s.ast)}</td>
+                      <td className="text-right tabular-nums py-1 px-0.5 text-foreground">{fmtShort(s.rev)}</td>
+                      <td className="text-right tabular-nums py-1 px-0.5 text-foreground">{fmtShort(s.lab)}</td>
+                      <td className={`text-right tabular-nums py-1 px-0.5 font-semibold ${active ? "text-aneko-success" : "text-foreground"}`}>{fmtShort(s.total)}</td>
+                      <td className="text-right tabular-nums py-1 pl-0.5 text-foreground">{s.equiv.toFixed(1)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -561,46 +563,43 @@ function OpsView({ state, updOps }) {
   const { rows, rankMap, maxAddr, totals } = o;
 
   return (
-    <div className="flex flex-col gap-4 px-8 py-5 min-h-0 lg:flex-1 lg:h-full lg:overflow-hidden">
-      {/* Tab subtitle */}
-      <div className="shrink-0">
+    <div className="flex flex-col gap-3 px-6 py-4 min-h-0 lg:flex-1 lg:h-full lg:overflow-hidden">
+      <div className="shrink-0 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
         <h2 className="text-sm font-semibold text-foreground">Results &amp; diagnostic</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          A bottom-up view of within-read interruptions. Quantifies how much shift time Aneko can recover by automating the addressable categories below.
+        <p className="text-xs text-muted-foreground max-w-xl">
+          Within-read interruptions · assumptions on the right
         </p>
       </div>
 
-      {/* Top row: outcome tiles */}
-      <div className="grid grid-cols-4 gap-4 shrink-0">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 shrink-0">
         <Tile label="Interrupted / shift" value={`${totals.tot.toFixed(1)} min`} sub={`${totals.totPct.toFixed(1)}% of shift`} />
         <HeroTile label="Addressable / shift" value={`${totals.addr.toFixed(1)} min`} sub={`${totals.addrPct.toFixed(1)}% of shift`} />
         <Tile label="Addressable hrs / yr" value={fmt(totals.yearlyHrs)} sub="network-wide" />
         <Tile label="Equivalent FTE rads" value={totals.equivFTERads.toFixed(1)} sub="recovered annually" />
       </div>
 
-      {/* Main table */}
-      <div className="flex-1 min-h-0 rounded-lg bg-aneko-elev/60 flex flex-col overflow-hidden">
-        <div className="px-5 pt-4 pb-3 flex items-baseline justify-between gap-4 shrink-0">
-          <div>
-            <h2 className="text-base font-semibold text-foreground">Interruption inventory</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              <span className="font-medium text-foreground/80">Engines</span>: <span className="text-violet-300">Comms</span> = urgent communications · <span className="text-primary">Intake</span> = referrals & info · <span className="text-aneko-warning">Preference</span> = reader preferences · <span className="text-slate-300">General</span> = ambient
+      <div className="flex-1 min-h-0 rounded-lg bg-aneko-elev/60 flex flex-col overflow-hidden border border-border/30">
+        <div className="px-4 pt-3 pb-2 flex flex-wrap items-baseline justify-between gap-2 shrink-0">
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-foreground">Interruption inventory</h2>
+            <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+              <span className="font-medium text-foreground/80">Engines</span>: <span className="text-violet-300">Comms</span> · <span className="text-primary">Intake</span> · <span className="text-aneko-warning">Preference</span> · <span className="text-slate-300">General</span>
             </p>
           </div>
-          <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold whitespace-nowrap">Per rad / shift</div>
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold whitespace-nowrap">Per rad / shift</div>
         </div>
-        <div className="flex-1 overflow-auto">
-          <table className="w-full text-base">
+        <div className="flex-1 min-h-0 overflow-auto">
+          <table className="w-full text-sm">
             <thead className="sticky top-0 bg-aneko-elev/95 backdrop-blur z-10">
-              <tr className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
-                <th className="text-center px-3 py-3 w-12">#</th>
-                <th className="text-left px-4 py-3">Category</th>
-                <th className="text-left px-3 py-3">Engine</th>
-                <th className="text-center px-3 py-3">Frequency / shift</th>
-                <th className="text-center px-3 py-3">Minutes each</th>
-                <th className="text-right px-3 py-3">Time / shift</th>
-                <th className="text-right px-3 py-3">Addressable %</th>
-                <th className="px-4 py-3">Addressable time</th>
+              <tr className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+                <th className="text-center px-2 py-2 w-10">#</th>
+                <th className="text-left px-2 py-2">Category</th>
+                <th className="text-left px-2 py-2">Engine</th>
+                <th className="text-center px-2 py-2">Freq.</th>
+                <th className="text-center px-2 py-2">Min ea.</th>
+                <th className="text-right px-2 py-2">Time</th>
+                <th className="text-right px-2 py-2">Addr %</th>
+                <th className="px-3 py-2">Addressable</th>
               </tr>
             </thead>
             <tbody>
@@ -608,43 +607,43 @@ function OpsView({ state, updOps }) {
                 const pctOfMax = (r.addr / maxAddr) * 100;
                 return (
                   <tr key={r.id} className="border-t border-border/40 hover:bg-aneko-overlay/40 transition">
-                    <td className="text-center align-middle px-3 py-3">
-                      <div className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary/15 text-primary text-sm font-semibold tabular-nums">{rankMap.get(r.id)}</div>
+                    <td className="text-center align-middle px-2 py-2">
+                      <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/15 text-primary text-xs font-semibold tabular-nums">{rankMap.get(r.id)}</div>
                     </td>
-                    <td className="px-4 py-3 align-middle">
-                      <div className="font-medium text-foreground text-base">{r.category}</div>
+                    <td className="px-2 py-2 align-middle">
+                      <div className="font-medium text-foreground text-sm leading-snug">{r.category}</div>
                     </td>
-                    <td className="px-3 py-3 align-middle">
+                    <td className="px-2 py-2 align-middle">
                       <EngineBadge engine={r.engine} />
                     </td>
-                    <td className="px-3 py-2 text-center">
+                    <td className="px-2 py-1.5 text-center">
                       <CellInput value={r.idxFreq} onChange={(v) => updateRow(i, "idxFreq", v)} wider />
                     </td>
-                    <td className="px-3 py-2 text-center">
+                    <td className="px-2 py-1.5 text-center">
                       <CellInput value={r.idxMins} onChange={(v) => updateRow(i, "idxMins", v)} wider />
                     </td>
-                    <td className="px-3 py-3 text-right tabular-nums font-semibold text-base text-foreground">{r.timeLost.toFixed(1)} min</td>
-                    <td className="px-3 py-2 text-right">
+                    <td className="px-2 py-2 text-right tabular-nums font-semibold text-sm text-foreground">{r.timeLost.toFixed(1)}</td>
+                    <td className="px-2 py-1.5 text-right">
                       <CellInput value={r.addressablePct} onChange={(v) => updateRow(i, "addressablePct", v)} />
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1 bg-aneko-deep/60 rounded-full h-1.5 overflow-hidden">
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-aneko-deep/60 rounded-full h-1.5 overflow-hidden min-w-0">
                           <div className="bg-primary h-full rounded-full" style={{ width: `${pctOfMax}%` }} />
                         </div>
-                        <div className="w-16 text-right tabular-nums font-semibold text-foreground text-base">{r.addr.toFixed(1)} min</div>
+                        <div className="w-14 text-right tabular-nums font-semibold text-foreground text-sm shrink-0">{r.addr.toFixed(1)}</div>
                       </div>
                     </td>
                   </tr>
                 );
               })}
-              <tr className="font-semibold border-t-2 border-border/80 text-lg">
+              <tr className="font-semibold border-t-2 border-border/80 text-sm">
                 <td></td>
-                <td className="px-4 py-3.5 text-muted-foreground uppercase tracking-wide text-xs" colSpan={2}>Total</td>
+                <td className="px-2 py-2.5 text-muted-foreground uppercase tracking-wide text-[10px]" colSpan={2}>Total</td>
                 <td></td><td></td>
-                <td className="px-3 py-3.5 text-right tabular-nums text-foreground">{totals.tot.toFixed(1)} min</td>
+                <td className="px-2 py-2.5 text-right tabular-nums text-foreground">{totals.tot.toFixed(1)}</td>
                 <td></td>
-                <td className="px-4 py-3.5 text-right tabular-nums text-aneko-success">{totals.addr.toFixed(1)} min</td>
+                <td className="px-3 py-2.5 text-right tabular-nums text-aneko-success">{totals.addr.toFixed(1)}</td>
               </tr>
             </tbody>
           </table>
@@ -741,11 +740,11 @@ function Tile({ label, value, sub, valueTone }) {
     : valueTone === "orange" ? "text-aneko-warning"
     : "text-foreground";
   return (
-    <div className="rounded-lg bg-aneko-elev/60 px-4 py-3">
-      <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold truncate">{label}</div>
-      <div className="flex items-baseline justify-between gap-2 mt-2">
-        <div className={`text-3xl font-bold tabular-nums leading-none ${valueClass}`}>{value}</div>
-        {sub && <div className="text-sm text-muted-foreground tabular-nums">{sub}</div>}
+    <div className="rounded-lg bg-aneko-elev/60 px-3 py-2.5">
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold truncate">{label}</div>
+      <div className="flex items-baseline justify-between gap-2 mt-1">
+        <div className={`text-2xl font-bold tabular-nums leading-none ${valueClass}`}>{value}</div>
+        {sub && <div className="text-xs text-muted-foreground tabular-nums">{sub}</div>}
       </div>
     </div>
   );
@@ -754,34 +753,34 @@ function Tile({ label, value, sub, valueTone }) {
 // Hero tile — neutral surface, single bold accent on value only
 function HeroTile({ label, value, sub }) {
   return (
-    <div className="rounded-lg bg-aneko-elev/60 ring-1 ring-aneko-success/30 px-4 py-3">
-      <div className="text-xs uppercase tracking-widest text-aneko-success font-semibold truncate">{label}</div>
-      <div className="flex items-baseline justify-between gap-2 mt-2">
-        <div className="text-3xl font-bold tabular-nums leading-none text-aneko-success">{value}</div>
-        {sub && <div className="text-sm text-muted-foreground tabular-nums">{sub}</div>}
+    <div className="rounded-lg bg-aneko-elev/60 ring-1 ring-aneko-success/30 px-3 py-2.5">
+      <div className="text-[10px] uppercase tracking-widest text-aneko-success font-semibold truncate">{label}</div>
+      <div className="flex items-baseline justify-between gap-2 mt-1">
+        <div className="text-2xl font-bold tabular-nums leading-none text-aneko-success">{value}</div>
+        {sub && <div className="text-xs text-muted-foreground tabular-nums">{sub}</div>}
       </div>
     </div>
   );
 }
 
 // Input panel — borderless surface, single section heading
-function InputPanel({ title, children, className = "" }) {
+function InputPanel({ title, children, className = "", dense = false }) {
   return (
     <div className={`rounded-lg bg-aneko-elev/60 flex flex-col overflow-hidden ${className}`}>
-      <div className="px-4 pt-3 pb-2 shrink-0">
+      <div className={`shrink-0 ${dense ? "px-3 pt-2 pb-1" : "px-4 pt-3 pb-2"}`}>
         <span className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">{title}</span>
       </div>
-      <div className="px-4 pb-4 space-y-4">{children}</div>
+      <div className={`${dense ? "px-3 pb-3 space-y-3" : "px-4 pb-4 space-y-4"}`}>{children}</div>
     </div>
   );
 }
 
-function SliderInput({ label, value, min, max, step, onChange, display, minL, maxL }) {
+function SliderInput({ label, value, min, max, step, onChange, display, minL, maxL, compact = false }) {
   return (
     <div>
-      <div className="flex justify-between items-baseline mb-2">
-        <label className="text-sm font-semibold text-foreground">{label}</label>
-        <span className="text-lg tabular-nums font-bold text-primary leading-none">{display}</span>
+      <div className={`flex justify-between items-baseline ${compact ? "mb-1" : "mb-2"}`}>
+        <label className={`font-semibold text-foreground ${compact ? "text-xs" : "text-sm"}`}>{label}</label>
+        <span className={`tabular-nums font-bold text-primary leading-none ${compact ? "text-base" : "text-lg"}`}>{display}</span>
       </div>
       <input
         type="range"
