@@ -2,38 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Aligned with Ask-Clarifier dark theme (Aneko product UI) */
+/* Aligned with Aneko product UI — deep navy base, indigo accent */
 :root {
-  --button-outline: rgba(255, 255, 255, 0.12);
+  --button-outline: rgba(255, 255, 255, 0.10);
   --badge-outline: rgba(255, 255, 255, 0.08);
   --opaque-button-border-intensity: 11;
-  --elevate-1: rgba(255, 255, 255, 0.06);
-  --elevate-2: rgba(255, 255, 255, 0.12);
+  --elevate-1: rgba(255, 255, 255, 0.05);
+  --elevate-2: rgba(255, 255, 255, 0.10);
 
-  --bg-deep: 245 46% 10%;
-  --bg-base: 245 45% 15%;
-  --bg-elev: 245 42% 20%;
-  --bg-overlay: 245 36% 26%;
+  --bg-deep: 228 38% 7%;
+  --bg-base: 228 36% 9%;
+  --bg-elev: 228 30% 13%;
+  --bg-overlay: 228 26% 17%;
 
-  --accent-primary: 251 93% 63%;
-  --text-primary: 260 100% 98%;
-  --text-muted: 260 25% 80%;
+  --accent-primary: 243 76% 66%;
+  --text-primary: 220 15% 98%;
+  --text-muted: 225 12% 62%;
 
-  --success: 145 63% 52%;
-  --warning: 37 91% 58%;
-  --danger: 0 100% 68%;
+  --success: 145 60% 56%;
+  --warning: 35 92% 62%;
+  --danger: 0 80% 68%;
 
   --background: var(--bg-base);
   --foreground: var(--text-primary);
-  --border: 248 22% 28%;
+  --border: 226 18% 20%;
 
   --card: var(--bg-elev);
   --card-foreground: var(--text-primary);
-  --card-border: 248 22% 32%;
+  --card-border: 226 18% 22%;
 
   --popover: var(--bg-overlay);
   --popover-foreground: var(--text-primary);
-  --popover-border: 248 20% 28%;
+  --popover-border: 226 18% 22%;
 
   --primary: var(--accent-primary);
   --primary-foreground: 0 0% 100%;
@@ -50,7 +50,7 @@
   --destructive: var(--danger);
   --destructive-foreground: 0 0% 100%;
 
-  --input: 248 20% 28%;
+  --input: 226 18% 22%;
   --ring: var(--accent-primary);
 
   --chart-1: var(--accent-primary);

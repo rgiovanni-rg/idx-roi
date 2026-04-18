@@ -319,36 +319,32 @@ export default function App() {
 
   return (
     <div className="h-screen w-full font-sans flex flex-col overflow-hidden text-sm text-foreground bg-background">
-      {/* Top bar */}
-      <header className="px-5 py-3 flex items-center justify-between gap-4 border-b border-border bg-aneko-deep shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
-              <span className="font-black text-sm leading-none">A</span>
-            </div>
-            <div className="text-foreground font-black tracking-[0.2em] text-sm">ANEKO</div>
+      {/* Top bar — Aneko nav style */}
+      <header className="px-6 py-3 flex items-center justify-between gap-4 border-b border-border bg-aneko-deep shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-md bg-primary/15 border border-primary/30 text-primary flex items-center justify-center">
+            <span className="font-black text-sm leading-none">A</span>
           </div>
-          <div className="h-6 w-px bg-border" />
-          <div className="text-sm font-semibold text-foreground">MI-Calc</div>
+          <div className="text-foreground font-bold tracking-[0.18em] text-sm">ANEKO</div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex items-center gap-1 p-1 rounded-md bg-background border border-border">
-          <TabButton active={tab === "board"} onClick={() => setTab("board")} icon={<TrendingUp className="w-3.5 h-3.5" />}>Corporate</TabButton>
-          <TabButton active={tab === "ops"}   onClick={() => setTab("ops")}   icon={<Zap className="w-3.5 h-3.5" />}>Operations</TabButton>
+        {/* Tabs — flat with active pill */}
+        <div className="flex items-center gap-1">
+          <TabButton active={tab === "board"} onClick={() => setTab("board")} icon={<TrendingUp className="w-4 h-4" />}>Corporate</TabButton>
+          <TabButton active={tab === "ops"}   onClick={() => setTab("ops")}   icon={<Zap className="w-4 h-4" />}>Operations</TabButton>
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-2">
           <SaveIndicator visible={savedTick} />
-          <button onClick={handleCopyLink} className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold text-foreground/90 bg-aneko-elev border border-border hover:bg-accent transition">
+          <button onClick={handleCopyLink} className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-aneko-elev transition">
             <Link2 className="w-3.5 h-3.5" />
-            {copiedTick ? <span className="text-aneko-success">Copied</span> : <span>Share link</span>}
+            {copiedTick ? <span className="text-aneko-success">Copied</span> : <span>Share</span>}
           </button>
           <button onClick={handleExport} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold text-primary-foreground bg-primary hover:bg-primary/90 transition">
-            <Download className="w-3.5 h-3.5" /> Export Excel
+            <Download className="w-3.5 h-3.5" /> Export
           </button>
-          <button onClick={handleReset} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold text-foreground/85 bg-aneko-elev border border-border hover:bg-accent transition">
+          <button onClick={handleReset} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-aneko-elev transition">
             <RotateCcw className="w-3.5 h-3.5" /> Reset
           </button>
         </div>
@@ -398,13 +394,17 @@ function BoardView({ state, updBoard }) {
     <div className="h-full flex flex-col gap-3 px-5 py-3 min-h-0 overflow-y-auto">
       {/* Summary cards — labor vs value (above inputs & scenario results) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 shrink-0">
-        <div className="rounded-lg bg-aneko-deep border border-primary/40 px-4 py-3 ">
+        <div className="rounded-md bg-aneko-elev/40 border border-primary/30 px-4 py-3 ">
           <div className="flex items-start justify-between gap-2 mb-2">
-            <div>
-              <div className="text-sm uppercase tracking-wide text-primary font-bold">Labor efficiency</div>
-              <p className="text-[11px] text-muted-foreground/90 mt-0.5">Time reclaimed and directed to labor bank vs capacity</p>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-md bg-primary/15 border border-primary/30 text-primary flex items-center justify-center shrink-0">
+                <Clock className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-widest text-primary font-bold">Labor efficiency</div>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Time reclaimed and directed to labor bank vs capacity</p>
+              </div>
             </div>
-            <Clock className="w-5 h-5 text-primary shrink-0" />
           </div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
             <div className="text-muted-foreground">Efficiency gain</div>
@@ -418,13 +418,17 @@ function BoardView({ state, updBoard }) {
           </div>
           <p className="text-[10px] text-muted-foreground/90 mt-2">Dollar impact of the labor bank is summarized in the Annual value card beside this.</p>
         </div>
-        <div className="rounded-lg bg-aneko-deep border-2 border-aneko-success/60 px-4 py-3 ">
+        <div className="rounded-md bg-aneko-success/10 border border-aneko-success/40 px-4 py-3 ">
           <div className="flex items-start justify-between gap-2 mb-2">
-            <div>
-              <div className="text-sm uppercase tracking-wide text-aneko-success font-bold">Annual value & labor reclaimed</div>
-              <p className="text-[11px] text-muted-foreground/90 mt-0.5">Capacity revenue plus dollar-equivalent of reclaimed clinician time (not a cash reduction unless headcount changes)</p>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-md bg-aneko-success/20 border border-aneko-success/40 text-aneko-success flex items-center justify-center shrink-0">
+                <DollarSign className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-widest text-aneko-success font-bold">Annual value & labor reclaimed</div>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Capacity revenue plus dollar-equivalent of reclaimed clinician time (not a cash reduction unless headcount changes)</p>
+              </div>
             </div>
-            <DollarSign className="w-5 h-5 text-aneko-success shrink-0" />
           </div>
           <div className="space-y-2 text-xs">
             <div className="flex justify-between items-baseline gap-3">
@@ -639,13 +643,13 @@ function OpsView({ state, updOps }) {
                 return (
                   <tr key={r.id} className="border-b border-border hover:bg-aneko-elev/50">
                     <td className="text-center align-middle px-2">
-                      <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-[10px] font-bold tabular-nums">{rankMap.get(r.id)}</div>
+                      <div className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-primary/15 border border-primary/30 text-primary text-[10px] font-bold tabular-nums">{rankMap.get(r.id)}</div>
                     </td>
                     <td className="px-3 py-2 align-middle">
                       <div className="font-semibold text-foreground">{r.category}</div>
                     </td>
                     <td className="px-2 py-2 align-middle">
-                      <span className="inline-block px-1.5 py-0.5 rounded border border-input text-[10px] font-semibold text-foreground/90">{r.engine}</span>
+                      <EngineBadge engine={r.engine} />
                     </td>
                     <td className="px-2 py-2 text-center tabular-nums text-muted-foreground border-l border-border">{r.defaultFreq}</td>
                     <td className="px-2 py-2 text-center tabular-nums text-muted-foreground">{r.defaultMins}</td>
@@ -701,13 +705,29 @@ function OpsView({ state, updOps }) {
 // =============================================================================
 // SHARED COMPONENTS
 // =============================================================================
+// Aneko-style engine tag: colored pill matching the visual language of modality/status badges
+function EngineBadge({ engine }) {
+  const map = {
+    Comms:      "bg-violet-500/15 text-violet-300 border-violet-500/30",
+    Intake:     "bg-primary/15 text-primary border-primary/30",
+    Preference: "bg-aneko-warning/15 text-aneko-warning border-aneko-warning/30",
+    General:    "bg-slate-500/15 text-slate-300 border-slate-500/30",
+  };
+  const cls = map[engine] || "bg-slate-500/15 text-slate-300 border-slate-500/30";
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold tracking-wide ${cls}`}>
+      {engine}
+    </span>
+  );
+}
+
 function TabButton({ active, onClick, icon, children }) {
   return (
     <button onClick={onClick}
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold transition ${
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition ${
         active
-          ? "bg-primary text-primary-foreground"
-          : "text-muted-foreground hover:text-foreground hover:bg-aneko-elev"
+          ? "bg-primary/15 text-primary border border-primary/40"
+          : "text-muted-foreground hover:text-foreground hover:bg-aneko-elev border border-transparent"
       }`}>
       {icon} {children}
     </button>
@@ -723,34 +743,42 @@ function SaveIndicator({ visible }) {
   );
 }
 
-// Input field: stronger primary tint + border so editable fields read clearly as inputs
+// Input field — Aneko card style with primary tint to signal editability
 function InputCard({ label, value, onChange, prefix, step = 1 }) {
   return (
-    <div className="rounded-md bg-primary/5 border-2 border-primary/40 p-3">
-      <label className="text-xs uppercase tracking-wide text-primary font-bold block mb-1.5">{label}</label>
+    <div className="rounded-md bg-primary/5 border border-primary/30 p-3">
+      <label className="text-[10px] uppercase tracking-widest text-primary font-bold block mb-2">{label}</label>
       <div className="relative">
         {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base">{prefix}</span>}
         <input type="number" step={step} value={value} onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          className={`w-full bg-background border-2 border-primary/50 rounded-md ${prefix ? "pl-7" : "pl-3"} pr-3 py-1.5 text-base font-bold tabular-nums text-foreground focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none`} />
+          className={`w-full bg-aneko-deep border border-primary/40 rounded-md ${prefix ? "pl-7" : "pl-3"} pr-3 py-2 text-base font-bold tabular-nums text-foreground focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none transition`} />
       </div>
     </div>
   );
 }
 
-// Output tile — neutral dark, white number
+// Output tile — Aneko stat pattern: icon-tinted square + big number + label
 function Tile({ label, value, sub, icon, valueTone }) {
   const valueClass =
     valueTone === "emerald" ? "text-aneko-success"
     : valueTone === "orange" ? "text-aneko-warning"
     : "text-foreground";
+  const iconBoxClass =
+    valueTone === "emerald" ? "bg-aneko-success/15 text-aneko-success border-aneko-success/30"
+    : valueTone === "orange" ? "bg-aneko-warning/15 text-aneko-warning border-aneko-warning/30"
+    : "bg-aneko-elev text-muted-foreground border-border";
   return (
-    <div className="rounded-md bg-aneko-deep border border-border px-4 py-2.5">
-      <div className="flex items-start justify-between">
-        <div className="text-xs uppercase tracking-wide text-muted-foreground font-bold leading-tight">{label}</div>
-        {icon && <div className="text-muted-foreground">{icon}</div>}
+    <div className="rounded-md bg-aneko-elev/40 border border-border px-4 py-3 flex items-center gap-3">
+      {icon && (
+        <div className={`shrink-0 w-10 h-10 rounded-md border flex items-center justify-center ${iconBoxClass}`}>
+          {icon}
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <div className={`text-2xl font-black tabular-nums leading-none ${valueClass}`}>{value}</div>
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mt-1.5 leading-tight">{label}</div>
+        {sub && <div className="text-[11px] text-muted-foreground/80 mt-0.5">{sub}</div>}
       </div>
-      <div className={`text-2xl font-black tabular-nums leading-tight mt-1 ${valueClass}`}>{value}</div>
-      {sub && <div className="text-[11px] text-muted-foreground mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -758,13 +786,15 @@ function Tile({ label, value, sub, icon, valueTone }) {
 // Hero tile — the ONE number that matters most
 function HeroTile({ label, value, sub, icon }) {
   return (
-    <div className="rounded-md bg-aneko-deep border-2 border-aneko-success px-4 py-2.5">
-      <div className="flex items-start justify-between">
-        <div className="text-xs uppercase tracking-wide text-aneko-success font-bold leading-tight">{label}</div>
-        {icon && <div className="text-aneko-success">{icon}</div>}
+    <div className="rounded-md bg-aneko-success/10 border border-aneko-success/40 px-4 py-3 flex items-center gap-3">
+      <div className="shrink-0 w-10 h-10 rounded-md bg-aneko-success/20 border border-aneko-success/40 text-aneko-success flex items-center justify-center">
+        {icon || <span className="text-sm font-black">★</span>}
       </div>
-      <div className="text-2xl font-black tabular-nums leading-tight mt-1 text-aneko-success">{value}</div>
-      {sub && <div className="text-[11px] text-foreground/85 mt-0.5">{sub}</div>}
+      <div className="flex-1 min-w-0">
+        <div className="text-2xl font-black tabular-nums leading-none text-aneko-success">{value}</div>
+        <div className="text-[10px] uppercase tracking-widest text-aneko-success font-bold mt-1.5 leading-tight">{label}</div>
+        {sub && <div className="text-[11px] text-foreground/85 mt-0.5">{sub}</div>}
+      </div>
     </div>
   );
 }
@@ -772,10 +802,10 @@ function HeroTile({ label, value, sub, icon }) {
 // Panel styles — Input vs Output clearly differentiated
 function InputPanel({ title, children, className = "" }) {
   return (
-    <div className={`rounded-md bg-aneko-elev border-2 border-primary/30 flex flex-col overflow-hidden ${className}`}>
-      <div className="px-4 py-2.5 border-b-2 border-primary/30 shrink-0 bg-primary/10 flex items-center justify-between">
-        <span className="text-sm uppercase tracking-wide text-primary font-bold">{title}</span>
-        <span className="text-[10px] uppercase tracking-widest text-primary/80 font-bold">Inputs</span>
+    <div className={`rounded-md bg-aneko-elev/40 border border-primary/25 flex flex-col overflow-hidden ${className}`}>
+      <div className="px-4 py-2.5 border-b border-primary/20 shrink-0 bg-primary/10 flex items-center justify-between">
+        <span className="text-xs uppercase tracking-widest text-primary font-bold">{title}</span>
+        <span className="text-[10px] uppercase tracking-widest text-primary/70 font-bold">Inputs</span>
       </div>
       <div className="p-4 space-y-4">{children}</div>
     </div>
@@ -801,7 +831,7 @@ function SliderInput({ label, value, min, max, step, onChange, display, minL, ma
 function CellInput({ value, onChange, step = 1, wider = false }) {
   return (
     <input type="number" step={step} value={value} onChange={(e) => onChange(e.target.value)}
-      className={`${wider ? "w-16" : "w-14"} text-right bg-background border-2 border-primary/50 rounded px-1.5 py-1 tabular-nums text-xs font-bold text-foreground focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none`} />
+      className={`${wider ? "w-16" : "w-14"} text-right bg-aneko-deep border border-primary/40 rounded px-1.5 py-1 tabular-nums text-xs font-bold text-foreground focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none transition`} />
   );
 }
 
