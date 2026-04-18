@@ -263,69 +263,87 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
   };
 
   return (
-    <div className="px-4 py-4 space-y-4">
-      <div>
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Assumptions</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">Inputs driving every number on the left.</p>
+    <div className="w-full flex flex-col gap-5 px-6 py-6">
+      {/* Header — mirrors the left's "Annual financial impact" header */}
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Assumptions</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Inputs driving every number on the left.</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <InputCard label="Radiologists" value={state.shared.radiologists} onChange={(v) => updShared("radiologists", v)} />
-        <InputCard label="Shifts / yr" value={state.shared.shiftsPerYear} onChange={(v) => updShared("shiftsPerYear", v)} />
-        <InputCard label="Minutes / shift" value={state.shared.shiftMinutes} onChange={(v) => updShared("shiftMinutes", v)} />
-        <InputCard label="Rad cost / yr" value={state.shared.radCostPerYear} onChange={(v) => updShared("radCostPerYear", v)} prefix="$" />
-      </div>
+      {/* Shared inputs — card section matching left */}
+      <section className="rounded-lg bg-aneko-elev/60 px-5 py-4">
+        <div className="flex items-baseline justify-between mb-3">
+          <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Shared inputs</h3>
+          <span className="text-[11px] text-muted-foreground">Network baseline</span>
+        </div>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+          <RailInput label="Radiologists" value={state.shared.radiologists} onChange={(v) => updShared("radiologists", v)} />
+          <RailInput label="Shifts / yr" value={state.shared.shiftsPerYear} onChange={(v) => updShared("shiftsPerYear", v)} />
+          <RailInput label="Minutes / shift" value={state.shared.shiftMinutes} onChange={(v) => updShared("shiftMinutes", v)} />
+          <RailInput label="Rad cost / yr" value={state.shared.radCostPerYear} onChange={(v) => updShared("radCostPerYear", v)} prefix="$" />
+        </div>
+      </section>
 
       {tab === "board" && (
         <>
-          <InputPanel title="Study mix">
+          {/* Study mix */}
+          <section className="rounded-lg bg-aneko-elev/60 px-5 py-4">
+            <div className="flex items-baseline justify-between mb-3">
+              <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Study mix</h3>
+              <span className="text-[11px] text-muted-foreground">Weighted averages used on the left</span>
+            </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
+                <tr className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
                   <th className="text-left pb-2 font-semibold">Modality</th>
-                  <th className="text-right pb-2 font-semibold pr-2">Volume mix %</th>
-                  <th className="text-right pb-2 font-semibold pr-2">Revenue / study</th>
-                  <th className="text-right pb-2 font-semibold pr-2">Read minutes</th>
+                  <th className="text-right pb-2 font-semibold px-1">Mix %</th>
+                  <th className="text-right pb-2 font-semibold px-1">Rev / study</th>
+                  <th className="text-right pb-2 font-semibold pl-1">Minutes</th>
                 </tr>
               </thead>
               <tbody>
                 {modalities.map((m, i) => (
                   <tr key={i} className="border-t border-border/40">
-                    <td className="py-1.5 text-foreground font-medium pr-1">{m.name}</td>
-                    <td className="text-right py-1.5"><CellInput value={m.mixPct} onChange={(v) => updateModality(i, "mixPct", v)} /></td>
-                    <td className="text-right py-1.5"><CellInput value={m.revenuePerStudy} onChange={(v) => updateModality(i, "revenuePerStudy", v)} wider /></td>
-                    <td className="text-right py-1.5"><CellInput value={m.readMinutes} onChange={(v) => updateModality(i, "readMinutes", v)} /></td>
+                    <td className="py-2 text-foreground font-medium pr-1">{m.name}</td>
+                    <td className="text-right py-2 px-1"><CellInput value={m.mixPct} onChange={(v) => updateModality(i, "mixPct", v)} /></td>
+                    <td className="text-right py-2 px-1"><CellInput value={m.revenuePerStudy} onChange={(v) => updateModality(i, "revenuePerStudy", v)} wider /></td>
+                    <td className="text-right py-2 pl-1"><CellInput value={m.readMinutes} onChange={(v) => updateModality(i, "readMinutes", v)} /></td>
                   </tr>
                 ))}
                 {totalMix !== 100 && (
                   <tr className="border-t border-border/40 bg-aneko-warning/10">
-                    <td className="py-2 pl-1 text-aneko-warning text-sm font-semibold uppercase tracking-wide">
+                    <td className="py-2 pr-1 text-aneko-warning text-[11px] font-semibold uppercase tracking-widest">
                       {totalMix > 100 ? "Over by" : "Remaining"}
                     </td>
-                    <td className="text-right py-2 pr-2">
-                      <span className="inline-block w-20 pr-2 text-aneko-warning font-bold tabular-nums text-base">
-                        {totalMix > 100 ? `−${totalMix - 100}%` : `+${100 - totalMix}%`}
-                      </span>
+                    <td className="text-right py-2 px-1 text-aneko-warning font-semibold tabular-nums text-sm">
+                      {totalMix > 100 ? `−${totalMix - 100}%` : `+${100 - totalMix}%`}
                     </td>
                     <td colSpan={2}></td>
                   </tr>
                 )}
-                <tr className="border-t-2 border-border/60 text-base font-semibold">
-                  <td className="py-3 text-muted-foreground uppercase tracking-wide text-xs">Weighted avg</td>
-                  <td className={`text-right tabular-nums py-3 ${totalMix === 100 ? "text-foreground" : "text-aneko-warning"}`}><span className="inline-block w-20 pr-2">{totalMix}%</span></td>
-                  <td className="text-right tabular-nums text-foreground py-3"><span className="inline-block w-24 pr-2">{fmtCurrency(wRev)}</span></td>
-                  <td className="text-right tabular-nums text-foreground py-3"><span className="inline-block w-20 pr-2">{wTime.toFixed(1)}</span></td>
+                <tr className="border-t-2 border-border/70 bg-aneko-elev/40">
+                  <th scope="row" className="py-2.5 text-left text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Weighted avg</th>
+                  <td className={`text-right tabular-nums py-2.5 px-1 font-semibold text-sm ${totalMix === 100 ? "text-foreground" : "text-aneko-warning"}`}>{totalMix}%</td>
+                  <td className="text-right tabular-nums py-2.5 px-1 font-semibold text-sm text-foreground">{fmtCurrency(wRev)}</td>
+                  <td className="text-right tabular-nums py-2.5 pl-1 font-semibold text-sm text-foreground">{wTime.toFixed(1)}</td>
                 </tr>
               </tbody>
             </table>
-          </InputPanel>
+          </section>
 
-          <InputPanel title="Investment">
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-2">Investment cost</label>
-              <div className="flex flex-wrap gap-3 items-center">
-                <div className="relative flex-1 min-w-[8rem]">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base">$</span>
+          {/* Investment */}
+          <section className="rounded-lg bg-aneko-elev/60 px-5 py-4">
+            <div className="flex items-baseline justify-between mb-3">
+              <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Investment</h3>
+              <span className="text-[11px] text-muted-foreground">Drives breakeven</span>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 items-end">
+              <div>
+                <label className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Investment cost</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                   <input
                     type="text"
                     inputMode="decimal"
@@ -335,19 +353,57 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
                       if (v === "" || /^-?\d*\.?\d*$/.test(v)) updBoard("engagementCost", v === "" ? 0 : parseFloat(v) || 0);
                     }}
                     onFocus={(e) => e.target.select()}
-                    className="w-full bg-aneko-deep rounded-md pl-7 pr-3 py-2 text-right tabular-nums text-base font-semibold text-foreground ring-1 ring-border hover:ring-primary/50 focus:ring-2 focus:ring-primary focus:outline-none transition"
+                    className="w-full bg-aneko-deep rounded-md pl-7 pr-3 py-1.5 text-right tabular-nums text-base font-semibold text-foreground ring-1 ring-border hover:ring-primary/50 focus:ring-2 focus:ring-primary focus:outline-none transition"
                     placeholder="0"
                   />
                 </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-sm text-muted-foreground">Breakeven</span>
-                  <span className="text-lg font-bold tabular-nums text-foreground">{breakevenMo !== null ? `${breakevenMo.toFixed(1)} mo` : "—"}</span>
+              </div>
+              <div>
+                <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Breakeven</div>
+                <div className="tabular-nums font-semibold text-2xl leading-none text-foreground">
+                  {breakevenMo !== null ? `${breakevenMo.toFixed(1)}` : "—"}
+                  {breakevenMo !== null && <span className="text-xs font-medium text-muted-foreground ml-1">mo</span>}
                 </div>
               </div>
             </div>
-          </InputPanel>
+          </section>
         </>
       )}
+    </div>
+  );
+}
+
+// Compact input used inside the rail — visual language matches the left-side sections
+function RailInput({ label, value, onChange, prefix }) {
+  const [draft, setDraft] = useState(String(value));
+  const [focused, setFocused] = useState(false);
+  useEffect(() => { if (!focused) setDraft(String(value)); }, [value, focused]);
+  return (
+    <div>
+      <label className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">{label}</label>
+      <div className="relative">
+        {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">{prefix}</span>}
+        <input
+          type="text"
+          inputMode="decimal"
+          value={draft}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === "" || /^-?\d*\.?\d*$/.test(v)) {
+              setDraft(v);
+              if (v !== "" && v !== "-" && v !== ".") {
+                const n = parseFloat(v);
+                if (!isNaN(n)) onChange(n);
+              } else if (v === "") {
+                onChange(0);
+              }
+            }
+          }}
+          onFocus={(e) => { setFocused(true); e.target.select(); }}
+          onBlur={() => setFocused(false)}
+          className={`w-full bg-aneko-deep rounded-md ${prefix ? "pl-7" : "pl-3"} pr-3 py-1.5 text-right tabular-nums text-base font-semibold text-foreground ring-1 ring-border hover:ring-primary/50 focus:ring-2 focus:ring-primary focus:outline-none transition`}
+        />
+      </div>
     </div>
   );
 }
@@ -418,7 +474,7 @@ export default function App() {
           }
         </div>
         {tab === "board" && (
-          <aside className="shrink-0 w-full lg:w-[28rem] border-t lg:border-t-0 lg:border-l border-border bg-aneko-elev/30">
+          <aside className="shrink-0 w-full lg:w-[32rem] border-t lg:border-t-0 lg:border-l border-border bg-aneko-elev/30">
             <AssumptionsRail tab={tab} state={state} updShared={updShared} updBoard={updBoard} />
           </aside>
         )}
