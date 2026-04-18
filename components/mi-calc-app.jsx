@@ -169,9 +169,9 @@ function computeOps(state) {
 
   const gap = totals.addrPct - corporateTargetPct;
   const status =
-    gap >= 1 ? { label: "Addressable interruptions exceed corporate target — defensible", tone: "ok" }
-    : gap >= 0 ? { label: "Addressable interruptions just meet corporate target — thin",  tone: "warn" }
-               : { label: "Addressable interruptions fall short of corporate target",     tone: "bad" };
+    gap >= 1 ? { label: "Addressable interruptions exceed the board commitment — defensible", tone: "ok" }
+    : gap >= 0 ? { label: "Addressable interruptions just meet the board commitment — thin",  tone: "warn" }
+               : { label: "Addressable interruptions fall short of the board commitment",     tone: "bad" };
 
   return { rows, ranked, rankMap, maxAddr, totals, gap, status, corporateTargetPct };
 }
@@ -362,6 +362,13 @@ function BoardView({ state, updBoard }) {
 
   return (
     <div className="h-full flex flex-col gap-4 px-8 py-5 min-h-0 overflow-hidden">
+      {/* Tab subtitle */}
+      <div className="shrink-0">
+        <p className="text-sm text-muted-foreground">
+          Annual financial impact of Aneko-driven read efficiency. Move the sliders below to model different scenarios — outputs update live.
+        </p>
+      </div>
+
       {/* Headline: total value + breakdown (full width) */}
       <div className="rounded-lg bg-aneko-elev/60 px-5 py-4 shrink-0">
         <div className="text-xs uppercase tracking-widest text-aneko-success font-semibold">Total annual value <span className="text-muted-foreground/70 font-medium normal-case tracking-normal">(AUD)</span></div>
@@ -542,21 +549,33 @@ function OpsView({ state, updOps }) {
   const toneText = { ok: "text-aneko-success", warn: "text-aneko-warning", bad: "text-aneko-warning" }[status.tone];
 
   return (
-    <div className="h-full flex flex-col gap-6 px-8 py-6 overflow-hidden">
+    <div className="h-full flex flex-col gap-4 px-8 py-5 overflow-hidden">
+      {/* Tab subtitle */}
+      <div className="shrink-0">
+        <p className="text-sm text-muted-foreground">
+          Within-read interruptions per radiologist, per shift. Addressable time should meet or exceed the Corporate efficiency target — this validates that the savings on the Corporate tab are achievable.
+        </p>
+      </div>
+
       {/* Top row: outcome tiles */}
       <div className="grid grid-cols-5 gap-4 shrink-0">
-        <Tile label="Corporate target" value={`${corporateTargetPct.toFixed(1)}%`} sub="from Corporate tab" />
-        <Tile label="Interrupted / shift" value={`${totals.tot.toFixed(1)} min`} sub={`${totals.totPct.toFixed(1)}%`} />
-        <HeroTile label="Addressable / shift" value={`${totals.addr.toFixed(1)} min`} sub={`${totals.addrPct.toFixed(1)}%`} />
-        <Tile label="Gap vs target" value={`${gap >= 0 ? "+" : ""}${gap.toFixed(1)}%`} valueTone={status.tone === "bad" || status.tone === "warn" ? "orange" : "emerald"} />
+        <Tile label="Board commitment" value={`${corporateTargetPct.toFixed(1)}% of shift`} sub="set on Corporate tab" />
+        <Tile label="Interrupted / shift" value={`${totals.tot.toFixed(1)} min`} sub={`${totals.totPct.toFixed(1)}% of shift`} />
+        <HeroTile label="Addressable / shift" value={`${totals.addr.toFixed(1)} min`} sub={`${totals.addrPct.toFixed(1)}% of shift`} />
+        <Tile label="Gap vs commitment" value={`${gap >= 0 ? "+" : ""}${gap.toFixed(1)}%`} sub={gap >= 0 ? "exceeds" : "falls short"} valueTone={status.tone === "bad" || status.tone === "warn" ? "orange" : "emerald"} />
         <Tile label="Addressable hrs / yr" value={fmt(totals.yearlyHrs)} sub="network-wide" />
       </div>
 
       {/* Main table */}
       <div className="flex-1 min-h-0 rounded-lg bg-aneko-elev/60 flex flex-col overflow-hidden">
-        <div className="px-5 pt-4 pb-3 flex items-center justify-between shrink-0">
-          <h2 className="text-base font-semibold text-foreground">Interruption inventory</h2>
-          <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Per rad / shift</div>
+        <div className="px-5 pt-4 pb-3 flex items-baseline justify-between gap-4 shrink-0">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">Interruption inventory</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              <span className="font-medium text-foreground/80">Engines</span>: <span className="text-violet-300">Comms</span> = urgent communications · <span className="text-primary">Intake</span> = referrals & info · <span className="text-aneko-warning">Preference</span> = reader preferences · <span className="text-slate-300">General</span> = ambient
+            </p>
+          </div>
+          <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold whitespace-nowrap">Per rad / shift</div>
         </div>
         <div className="flex-1 overflow-auto">
           <table className="w-full text-base">
@@ -620,12 +639,25 @@ function OpsView({ state, updOps }) {
         </div>
       </div>
 
-      {/* Reconciliation — flat inline strip */}
-      <div className="shrink-0 rounded-lg bg-aneko-elev/60 px-5 py-3 flex items-center gap-3">
-        <AlertCircle className={`w-5 h-5 shrink-0 ${toneText}`} />
-        <div className="flex-1 text-sm text-foreground/90">
-          <span className={`font-semibold ${toneText}`}>{status.label}.</span>{" "}
-          <span className="text-muted-foreground">Corporate target</span> <strong className="text-foreground tabular-nums">{corporateTargetPct.toFixed(1)}%</strong> <span className="text-muted-foreground/60 mx-1">·</span> <span className="text-muted-foreground">Addressable</span> <strong className="text-foreground tabular-nums">{totals.addrPct.toFixed(1)}%</strong> <span className="text-muted-foreground/60 mx-1">·</span> <span className="text-muted-foreground">Gap</span> <strong className={`tabular-nums ${toneText}`}>{gap >= 0 ? "+" : ""}{gap.toFixed(1)}%</strong>
+      {/* Reconciliation — clean status row with label/value pairs */}
+      <div className="shrink-0 rounded-lg bg-aneko-elev/60 px-5 py-3 flex items-center gap-6">
+        <div className="flex items-center gap-2.5 shrink-0">
+          <AlertCircle className={`w-5 h-5 ${toneText}`} />
+          <span className={`text-sm font-semibold ${toneText}`}>{status.label}</span>
+        </div>
+        <div className="flex-1 grid grid-cols-3 gap-6">
+          <div>
+            <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Board commitment</div>
+            <div className="tabular-nums font-bold text-base text-foreground mt-0.5">{corporateTargetPct.toFixed(1)}%</div>
+          </div>
+          <div>
+            <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Addressable</div>
+            <div className="tabular-nums font-bold text-base text-foreground mt-0.5">{totals.addrPct.toFixed(1)}%</div>
+          </div>
+          <div>
+            <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Gap</div>
+            <div className={`tabular-nums font-bold text-base mt-0.5 ${toneText}`}>{gap >= 0 ? "+" : ""}{gap.toFixed(1)}%</div>
+          </div>
         </div>
       </div>
     </div>
