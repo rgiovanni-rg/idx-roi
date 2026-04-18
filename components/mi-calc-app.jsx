@@ -146,7 +146,6 @@ function computeCorporate(state) {
 function computeOps(state) {
   const { radiologists, shiftsPerYear, shiftMinutes } = state.shared;
   const { interruptions } = state.ops;
-  const corporateTargetPct = state.board.efficiencyGain;
 
   const rows = interruptions.map((r) => {
     const timeLost = r.idxFreq * r.idxMins;
@@ -156,24 +155,20 @@ function computeOps(state) {
 
   const tot = rows.reduce((s, r) => s + r.timeLost, 0);
   const addr = rows.reduce((s, r) => s + r.addr, 0);
+  const yearlyMin = addr * shiftsPerYear * radiologists;
   const totals = {
     tot, addr,
     totPct: shiftMinutes > 0 ? (tot / shiftMinutes) * 100 : 0,
     addrPct: shiftMinutes > 0 ? (addr / shiftMinutes) * 100 : 0,
-    yearlyHrs: (addr * shiftsPerYear * radiologists) / 60,
+    yearlyHrs: yearlyMin / 60,
+    equivFTERads: (shiftsPerYear * shiftMinutes) > 0 ? yearlyMin / (shiftsPerYear * shiftMinutes) : 0,
   };
 
   const ranked = [...rows].sort((a, b) => b.addr - a.addr);
   const rankMap = new Map(ranked.map((r, i) => [r.id, i + 1]));
   const maxAddr = Math.max(...rows.map((r) => r.addr), 0.001);
 
-  const gap = totals.addrPct - corporateTargetPct;
-  const status =
-    gap >= 1 ? { label: "Addressable interruptions exceed the board commitment — defensible", tone: "ok" }
-    : gap >= 0 ? { label: "Addressable interruptions just meet the board commitment — thin",  tone: "warn" }
-               : { label: "Addressable interruptions fall short of the board commitment",     tone: "bad" };
-
-  return { rows, ranked, rankMap, maxAddr, totals, gap, status, corporateTargetPct };
+  return { rows, ranked, rankMap, maxAddr, totals };
 }
 
 // ---------- Excel export ----------
@@ -235,19 +230,16 @@ function exportWorkbook(state) {
   const ops = [
     ["OPERATIONS DIAGNOSTIC"],
     [],
-    ["Corporate efficiency target (from Corporate tab, %)", o.corporateTargetPct],
-    [],
     ["INTERRUPTION INVENTORY"],
     ["Rank", "Category", "Engine", "Frequency / shift", "Minutes each", "Time / shift (min)", "Addressable %", "Addressable (min)"],
     ...o.ranked.map(r => [o.rankMap.get(r.id), r.category, r.engine, r.idxFreq, r.idxMins, Number(r.timeLost.toFixed(2)), r.addressablePct, Number(r.addr.toFixed(2))]),
     ["", "TOTAL", "", "", "", Number(o.totals.tot.toFixed(2)), "", Number(o.totals.addr.toFixed(2))],
     [],
-    ["RECONCILIATION"],
-    ["Corporate efficiency target (%)", o.corporateTargetPct],
-    ["Addressable interruptions (% of shift)", Number(o.totals.addrPct.toFixed(2))],
-    ["Gap (addressable − target)", Number(o.gap.toFixed(2))],
-    ["Status", o.status.label],
+    ["NETWORK IMPACT"],
+    ["Interrupted (% of shift)", Number(o.totals.totPct.toFixed(2))],
+    ["Addressable (% of shift)", Number(o.totals.addrPct.toFixed(2))],
     ["Network-wide addressable hours / yr", Math.round(o.totals.yearlyHrs)],
+    ["Equivalent FTE radiologists recovered annually", Number(o.totals.equivFTERads.toFixed(2))],
   ];
   const opsSheet = XLSX.utils.aoa_to_sheet(ops);
   opsSheet["!cols"] = [{ wch: 6 }, { wch: 44 }, { wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 18 }, { wch: 14 }, { wch: 16 }];
@@ -544,26 +536,23 @@ function OpsView({ state, updOps }) {
   };
 
   const o = useMemo(() => computeOps(state), [state]);
-  const { rows, rankMap, maxAddr, totals, gap, status, corporateTargetPct } = o;
-
-  const toneText = { ok: "text-aneko-success", warn: "text-aneko-warning", bad: "text-aneko-warning" }[status.tone];
+  const { rows, rankMap, maxAddr, totals } = o;
 
   return (
     <div className="h-full flex flex-col gap-4 px-8 py-5 overflow-hidden">
       {/* Tab subtitle */}
       <div className="shrink-0">
         <p className="text-sm text-muted-foreground">
-          Within-read interruptions per radiologist, per shift. Addressable time should meet or exceed the Corporate efficiency target — this validates that the savings on the Corporate tab are achievable.
+          A bottom-up view of within-read interruptions. Quantifies how much shift time Aneko can recover by automating the addressable categories below.
         </p>
       </div>
 
       {/* Top row: outcome tiles */}
-      <div className="grid grid-cols-5 gap-4 shrink-0">
-        <Tile label="Board commitment" value={`${corporateTargetPct.toFixed(1)}% of shift`} sub="set on Corporate tab" />
+      <div className="grid grid-cols-4 gap-4 shrink-0">
         <Tile label="Interrupted / shift" value={`${totals.tot.toFixed(1)} min`} sub={`${totals.totPct.toFixed(1)}% of shift`} />
         <HeroTile label="Addressable / shift" value={`${totals.addr.toFixed(1)} min`} sub={`${totals.addrPct.toFixed(1)}% of shift`} />
-        <Tile label="Gap vs commitment" value={`${gap >= 0 ? "+" : ""}${gap.toFixed(1)}%`} sub={gap >= 0 ? "exceeds" : "falls short"} valueTone={status.tone === "bad" || status.tone === "warn" ? "orange" : "emerald"} />
         <Tile label="Addressable hrs / yr" value={fmt(totals.yearlyHrs)} sub="network-wide" />
+        <Tile label="Equivalent FTE rads" value={totals.equivFTERads.toFixed(1)} sub="recovered annually" />
       </div>
 
       {/* Main table */}
@@ -639,27 +628,6 @@ function OpsView({ state, updOps }) {
         </div>
       </div>
 
-      {/* Reconciliation — clean status row with label/value pairs */}
-      <div className="shrink-0 rounded-lg bg-aneko-elev/60 px-5 py-3 flex items-center gap-6">
-        <div className="flex items-center gap-2.5 shrink-0">
-          <AlertCircle className={`w-5 h-5 ${toneText}`} />
-          <span className={`text-sm font-semibold ${toneText}`}>{status.label}</span>
-        </div>
-        <div className="flex-1 grid grid-cols-3 gap-6">
-          <div>
-            <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Board commitment</div>
-            <div className="tabular-nums font-bold text-base text-foreground mt-0.5">{corporateTargetPct.toFixed(1)}%</div>
-          </div>
-          <div>
-            <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Addressable</div>
-            <div className="tabular-nums font-bold text-base text-foreground mt-0.5">{totals.addrPct.toFixed(1)}%</div>
-          </div>
-          <div>
-            <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Gap</div>
-            <div className={`tabular-nums font-bold text-base mt-0.5 ${toneText}`}>{gap >= 0 ? "+" : ""}{gap.toFixed(1)}%</div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
