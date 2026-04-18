@@ -39,12 +39,20 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Public paths — do not gate
+  // Next.js metadata routes (no file extension): /icon, /apple-icon, /opengraph-image, etc.
+  const isMetadataImageRoute =
+    pathname === "/icon" ||
+    pathname === "/apple-icon" ||
+    pathname === "/opengraph-image" ||
+    pathname === "/twitter-image";
+
   if (
     pathname === "/login" ||
     pathname.startsWith("/api/login") ||
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico" ||
     pathname === "/favicon.svg" ||
+    isMetadataImageRoute ||
     /\.(svg|png|jpg|jpeg|ico|webp|woff2?|css|js|map)$/i.test(pathname)
   ) {
     return NextResponse.next();
