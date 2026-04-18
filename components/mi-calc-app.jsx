@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import {
   TrendingUp, Users, DollarSign, Clock, AlertCircle,
-  Download, RotateCcw, Check, Zap, Link2,
+  Download, RotateCcw, Check, Zap,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 
@@ -64,28 +64,7 @@ function mergeWithDefaults(parsed) {
   };
 }
 
-// URL hash codec — base64(JSON) with unicode-safe encoding
-function encodeState(state) {
-  try {
-    const json = JSON.stringify(state);
-    return btoa(unescape(encodeURIComponent(json)));
-  } catch { return ""; }
-}
-function decodeStateFromHash() {
-  if (typeof window === "undefined") return null;
-  const hash = window.location.hash || "";
-  const m = hash.match(/[#&]s=([^&]+)/);
-  if (!m) return null;
-  try {
-    const json = decodeURIComponent(escape(atob(m[1])));
-    return mergeWithDefaults(JSON.parse(json));
-  } catch { return null; }
-}
-
 function loadState() {
-  // Priority: URL hash > localStorage > defaults
-  const fromHash = decodeStateFromHash();
-  if (fromHash) return fromHash;
   try {
     const raw = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
     if (!raw) return deepCopy(DEFAULT_STATE);
@@ -269,16 +248,7 @@ export default function App() {
   const [state, setState] = useState(loadState);
   const [tab, setTab] = useState("board");
   const [savedTick, setSavedTick] = useState(false);
-  const [copiedTick, setCopiedTick] = useState(false);
   const firstRun = useRef(true);
-
-  // One-shot: if the initial state came from a URL hash, clear it so ongoing
-  // edits don't look like they're re-applying an outdated shared scenario.
-  useEffect(() => {
-    if (typeof window !== "undefined" && /[#&]s=/.test(window.location.hash)) {
-      history.replaceState(null, "", window.location.pathname + window.location.search);
-    }
-  }, []);
 
   useEffect(() => {
     if (firstRun.current) { firstRun.current = false; return; }
@@ -294,23 +264,6 @@ export default function App() {
 
   const handleExport = () => exportWorkbook(state);
 
-  const handleCopyLink = async () => {
-    const encoded = encodeState(state);
-    if (!encoded) return;
-    const url = `${window.location.origin}${window.location.pathname}#s=${encoded}`;
-    try {
-      await navigator.clipboard.writeText(url);
-    } catch {
-      // Fallback for non-secure contexts
-      const ta = document.createElement("textarea");
-      ta.value = url; document.body.appendChild(ta); ta.select();
-      try { document.execCommand("copy"); } catch {}
-      document.body.removeChild(ta);
-    }
-    setCopiedTick(true);
-    setTimeout(() => setCopiedTick(false), 1500);
-  };
-
   const handleReset = () => {
     if (window.confirm("Reset all inputs to defaults?")) {
       setState(deepCopy(DEFAULT_STATE));
@@ -319,42 +272,40 @@ export default function App() {
 
   return (
     <div className="h-screen w-full font-sans flex flex-col overflow-hidden text-sm text-foreground bg-background">
-      {/* Top bar — Aneko nav style */}
-      <header className="px-6 py-3 flex items-center justify-between gap-4 border-b border-border bg-aneko-deep shrink-0">
-        <div className="flex items-center gap-3">
-          <img src="/favicon.svg" alt="Aneko" className="w-7 h-7 rounded-md" />
+      {/* Top bar */}
+      <header className="px-8 h-16 flex items-center justify-between gap-6 bg-aneko-deep shrink-0">
+        <div className="flex items-center gap-4">
+          <img src="/favicon.svg" alt="Aneko" className="w-8 h-8 rounded-md" />
           <div className="text-foreground font-bold tracking-[0.18em] text-sm">ANEKO</div>
+          <div className="h-5 w-px bg-border" />
+          <div className="text-base font-semibold text-foreground/90">MI-Calc</div>
         </div>
 
-        {/* Tabs — flat with active pill */}
-        <div className="flex items-center gap-1">
+        {/* Tabs — bottom-underline indicator */}
+        <nav className="flex items-center gap-1 self-stretch">
           <TabButton active={tab === "board"} onClick={() => setTab("board")} icon={<TrendingUp className="w-4 h-4" />}>Corporate</TabButton>
           <TabButton active={tab === "ops"}   onClick={() => setTab("ops")}   icon={<Zap className="w-4 h-4" />}>Operations</TabButton>
-        </div>
+        </nav>
 
         {/* Actions */}
         <div className="flex items-center gap-2">
           <SaveIndicator visible={savedTick} />
-          <button onClick={handleCopyLink} className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-aneko-elev transition">
-            <Link2 className="w-3.5 h-3.5" />
-            {copiedTick ? <span className="text-aneko-success">Copied</span> : <span>Share</span>}
+          <button onClick={handleReset} className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-aneko-elev transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <RotateCcw className="w-4 h-4" /> Reset
           </button>
-          <button onClick={handleExport} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold text-primary-foreground bg-primary hover:bg-primary/90 transition">
-            <Download className="w-3.5 h-3.5" /> Export
-          </button>
-          <button onClick={handleReset} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-aneko-elev transition">
-            <RotateCcw className="w-3.5 h-3.5" /> Reset
+          <button onClick={handleExport} className="inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary/90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60">
+            <Download className="w-4 h-4" /> Export
           </button>
         </div>
       </header>
 
-      {/* Shared inputs */}
-      <section className="px-5 pt-3 pb-3 shrink-0 border-b border-border bg-aneko-deep">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-foreground">Shared assumptions</h2>
-          <span className="text-[11px] text-muted-foreground">Edit any field — used by both tabs</span>
+      {/* Shared inputs — borderless surface, more breathing room */}
+      <section className="px-8 py-4 shrink-0 bg-aneko-elev/30">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Shared assumptions</h2>
+          <span className="text-xs text-muted-foreground">Used by both tabs</span>
         </div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-4 gap-6">
           <InputCard label="Radiologists"    value={state.shared.radiologists}   onChange={(v) => updShared("radiologists", v)} />
           <InputCard label="Shifts / yr"     value={state.shared.shiftsPerYear}  onChange={(v) => updShared("shiftsPerYear", v)} />
           <InputCard label="Minutes / shift" value={state.shared.shiftMinutes}   onChange={(v) => updShared("shiftMinutes", v)} />
@@ -389,110 +340,70 @@ function BoardView({ state, updBoard }) {
   const { wRev, wTime, totalMix, minReclaimed, capMin, labMin, addStudiesYr, revenueUnlocked, laborSaved, equivRads, totalValue, breakevenMo, scenarios } = c;
 
   return (
-    <div className="h-full flex flex-col gap-3 px-5 py-3 min-h-0 overflow-y-auto">
-      {/* Summary cards — labor vs value (above inputs & scenario results) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 shrink-0">
-        <div className="rounded-md bg-aneko-elev/40 border border-border px-4 py-3">
-          <div className="flex items-center gap-2.5 mb-3">
-            <div className="w-8 h-8 rounded-md bg-primary/15 border border-primary/30 text-primary flex items-center justify-center shrink-0">
-              <Clock className="w-4 h-4" />
+    <div className="h-full flex flex-col gap-6 px-8 py-6 min-h-0 overflow-y-auto">
+      {/* Headline: revenue unlocked + breakdown */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
+        <div className="md:col-span-2 rounded-lg bg-aneko-elev/60 px-6 py-5">
+          <div className="text-xs uppercase tracking-widest text-aneko-success font-semibold">Total annual value</div>
+          <div className="flex items-baseline gap-3 mt-2">
+            <div className="tabular-nums font-bold text-5xl text-aneko-success leading-none">{fmtCurrency(totalValue)}</div>
+            <div className="text-sm text-muted-foreground">at {efficiencyGain.toFixed(1)}% efficiency gain</div>
+          </div>
+          <div className="grid grid-cols-2 gap-6 mt-5 pt-4 border-t border-border/60">
+            <div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Revenue unlocked</div>
+              <div className="tabular-nums font-bold text-2xl text-foreground mt-1">{fmtCurrency(revenueUnlocked)}</div>
+              <div className="text-xs text-muted-foreground mt-1">from {fmt(addStudiesYr)} additional studies</div>
             </div>
             <div>
-              <div className="text-sm uppercase tracking-wide text-primary font-bold">Labor efficiency</div>
-              <p className="text-xs text-muted-foreground mt-0.5">Reclaimed time split across capacity and labor bank</p>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Labor value reclaimed</div>
+              <div className="tabular-nums font-bold text-2xl text-foreground mt-1">{fmtCurrency(laborSaved)}</div>
+              <div className="text-xs text-muted-foreground mt-1">≈ {equivRads.toFixed(1)} equivalent radiologists</div>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
-            <div className="text-muted-foreground">Efficiency gain</div>
-            <div className="tabular-nums font-bold text-foreground text-right">{efficiencyGain.toFixed(1)}%</div>
-            <div className="text-muted-foreground">Reclaimed / shift</div>
-            <div className="tabular-nums font-bold text-foreground text-right">{minReclaimed.toFixed(1)} min</div>
-            <div className="text-muted-foreground">Capacity</div>
-            <div className="tabular-nums font-bold text-foreground text-right">{capMin.toFixed(1)} min</div>
-            <div className="text-muted-foreground">Labor bank</div>
-            <div className="tabular-nums font-bold text-primary text-right">{labMin.toFixed(1)} min</div>
           </div>
         </div>
-        <div className="rounded-md bg-aneko-success/10 border border-aneko-success/40 px-4 py-3 ">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-md bg-aneko-success/20 border border-aneko-success/40 text-aneko-success flex items-center justify-center shrink-0">
-                <DollarSign className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="text-sm uppercase tracking-wide text-aneko-success font-bold">Annual value & labor reclaimed</div>
-                <p className="text-xs text-muted-foreground mt-0.5">Revenue plus dollar-equivalent of reclaimed clinician time (not cash unless headcount changes)</p>
-              </div>
-            </div>
-          </div>
-          <div className="space-y-1.5 text-sm">
-            <div className="flex justify-between items-baseline gap-3">
-              <span className="text-muted-foreground">Revenue unlocked</span>
-              <span className="tabular-nums font-bold text-foreground">{fmtCurrency(revenueUnlocked)}</span>
-            </div>
-            <div className="flex justify-between items-baseline gap-3">
-              <span className="text-muted-foreground">Labor value reclaimed</span>
-              <span className="tabular-nums font-bold text-foreground">{fmtCurrency(laborSaved)}</span>
-            </div>
-            <div className="h-px bg-border" />
-            <div className="flex justify-between items-end gap-3 pt-0.5">
-              <span className="text-xs uppercase tracking-wide text-aneko-success font-bold">Total annual value</span>
-              <span className="tabular-nums font-black text-3xl text-aneko-success leading-none">{fmtCurrency(totalValue)}</span>
-            </div>
+        <div className="rounded-lg bg-aneko-elev/60 px-6 py-5">
+          <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Time reclaimed / shift</div>
+          <div className="tabular-nums font-bold text-5xl text-foreground leading-none mt-2">{minReclaimed.toFixed(1)}<span className="text-lg text-muted-foreground font-normal ml-1.5">min</span></div>
+          <div className="space-y-1.5 mt-5 pt-4 border-t border-border/60 text-sm">
+            <div className="flex justify-between"><span className="text-muted-foreground">Capacity ({reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{capMin.toFixed(1)} min</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Labor bank ({100-reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{labMin.toFixed(1)} min</span></div>
           </div>
         </div>
       </div>
 
-      {/* Quick context — derived throughput (not the main “results” table) */}
-      <div className="grid grid-cols-3 gap-3 shrink-0">
-        <Tile label="Additional studies / yr" value={fmt(addStudiesYr)} icon={<TrendingUp className="w-4 h-4" />} />
-        <Tile label="Equivalent radiologists" value={equivRads.toFixed(1)} icon={<Users className="w-4 h-4" />} />
-        <Tile label="Minutes reclaimed / shift" value={minReclaimed.toFixed(1)} icon={<Clock className="w-4 h-4" />} />
-      </div>
-
-      {/* Inputs: drivers + study mix — natural height; page scrolls to sensitivity */}
-      <div className="grid grid-cols-12 gap-3 shrink-0">
+      {/* Inputs: drivers + study mix */}
+      <div className="grid grid-cols-12 gap-4 shrink-0">
         {/* Drivers */}
         <InputPanel title="Drivers" className="col-span-6">
-          <div>
-            <SliderInput label="Efficiency gain" value={efficiencyGain} min={0.5} max={10} step={0.1}
-              onChange={(v) => updBoard("efficiencyGain", v)}
-              display={`${efficiencyGain.toFixed(1)}%`} />
-            <div className="mt-2 rounded bg-aneko-deep border border-border px-3 py-2 flex justify-between text-sm">
-              <span className="text-muted-foreground">Reclaimed</span>
-              <span className="tabular-nums font-bold text-foreground">{minReclaimed.toFixed(1)} min / shift</span>
-            </div>
-          </div>
+          <SliderInput label="Efficiency gain" value={efficiencyGain} min={0.5} max={10} step={0.1}
+            onChange={(v) => updBoard("efficiencyGain", v)}
+            display={`${efficiencyGain.toFixed(1)}%`} />
 
-          <div>
-            <SliderInput label="Reinvest to capacity" value={reinvestPct} min={0} max={100} step={5}
-              onChange={(v) => updBoard("reinvestPct", v)}
-              display={`${reinvestPct}%`} />
-            <div className="mt-2 space-y-1.5">
-              <div className="rounded bg-aneko-deep border border-border px-3 py-2 flex justify-between items-baseline text-sm">
-                <span className="text-muted-foreground">Capacity <span className="tabular-nums text-foreground/90">{capMin.toFixed(1)}m</span></span>
-                <span className="tabular-nums font-bold text-foreground">+{fmt(addStudiesYr)} studies/yr</span>
+          <SliderInput label="Reinvest to capacity" value={reinvestPct} min={0} max={100} step={5}
+            onChange={(v) => updBoard("reinvestPct", v)}
+            display={`${reinvestPct}%`} />
+
+          <div className="pt-3 border-t border-border/40">
+            <label className="block text-sm font-semibold text-foreground mb-2">Engagement cost</label>
+            <div className="flex gap-3 items-center">
+              <div className="relative flex-1">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base">$</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={engagementCost}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "" || /^-?\d*\.?\d*$/.test(v)) updBoard("engagementCost", v === "" ? 0 : parseFloat(v) || 0);
+                  }}
+                  onFocus={(e) => e.target.select()}
+                  className="w-full bg-aneko-deep rounded-md pl-7 pr-3 py-2 text-right tabular-nums text-base font-semibold text-foreground ring-1 ring-border hover:ring-primary/50 focus:ring-2 focus:ring-primary focus:outline-none transition"
+                  placeholder="0"
+                />
               </div>
-              <div className="rounded bg-aneko-deep border border-border px-3 py-2 flex justify-between items-baseline text-sm">
-                <span className="text-muted-foreground">Labor <span className="tabular-nums text-foreground/90">{labMin.toFixed(1)}m</span></span>
-                <span className="tabular-nums font-bold text-foreground">{fmtCurrency(laborSaved)}/yr</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="h-px bg-border my-1" />
-
-          <div>
-            <label className="block text-sm font-semibold text-foreground mb-1.5">Engagement cost</label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base">$</span>
-              <input type="number" value={engagementCost} onChange={(e) => updBoard("engagementCost", parseFloat(e.target.value) || 0)}
-                className="w-full bg-aneko-deep border border-border rounded pl-7 pr-3 py-2 text-right tabular-nums text-base font-bold text-foreground hover:border-primary/50 focus:border-primary focus:outline-none transition"
-                placeholder="0" />
-            </div>
-            <div className="mt-2 flex items-center justify-between px-3 py-2 rounded bg-aneko-deep border border-border">
-              <div className="text-sm font-semibold text-foreground">Breakeven</div>
-              <div className="text-lg font-bold tabular-nums text-foreground">{breakevenMo !== null ? `${breakevenMo.toFixed(1)} mo` : "—"}</div>
+              <div className="text-sm text-muted-foreground">Breakeven</div>
+              <div className="text-lg font-bold tabular-nums text-foreground tabular-nums">{breakevenMo !== null ? `${breakevenMo.toFixed(1)} mo` : "—"}</div>
             </div>
           </div>
         </InputPanel>
@@ -501,67 +412,71 @@ function BoardView({ state, updBoard }) {
         <InputPanel title="Study mix" className="col-span-6">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
-                <th className="text-left py-1.5 font-bold">Modality</th>
-                <th className="text-right py-1.5 font-bold">Mix %</th>
-                <th className="text-right py-1.5 font-bold">Rev $</th>
-                <th className="text-right py-1.5 font-bold">Min</th>
+              <tr className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
+                <th className="text-left pb-2 font-semibold">Modality</th>
+                <th className="text-right pb-2 font-semibold pr-2">Mix %</th>
+                <th className="text-right pb-2 font-semibold pr-2">Rev $</th>
+                <th className="text-right pb-2 font-semibold pr-2">Min</th>
               </tr>
             </thead>
             <tbody>
               {modalities.map((m, i) => (
-                <tr key={i} className="border-b border-border">
-                  <td className="py-1 text-foreground font-medium pr-1">{m.name}</td>
-                  <td className="text-right py-1"><CellInput value={m.mixPct} onChange={(v) => updateModality(i, "mixPct", v)} /></td>
-                  <td className="text-right py-1"><CellInput value={m.revenuePerStudy} onChange={(v) => updateModality(i, "revenuePerStudy", v)} wider /></td>
-                  <td className="text-right py-1"><CellInput value={m.readMinutes} onChange={(v) => updateModality(i, "readMinutes", v)} /></td>
+                <tr key={i} className="border-t border-border/40">
+                  <td className="py-1.5 text-foreground font-medium pr-1">{m.name}</td>
+                  <td className="text-right py-1.5"><CellInput value={m.mixPct} onChange={(v) => updateModality(i, "mixPct", v)} /></td>
+                  <td className="text-right py-1.5"><CellInput value={m.revenuePerStudy} onChange={(v) => updateModality(i, "revenuePerStudy", v)} wider /></td>
+                  <td className="text-right py-1.5"><CellInput value={m.readMinutes} onChange={(v) => updateModality(i, "readMinutes", v)} /></td>
                 </tr>
               ))}
-              <tr className="font-semibold border-t-2 border-border bg-aneko-deep">
-                <td className="py-2 text-foreground">Weighted avg</td>
-                <td className="text-right tabular-nums text-foreground py-2">{totalMix}%</td>
-                <td className="text-right tabular-nums text-foreground py-2">{fmtCurrency(wRev)}</td>
-                <td className="text-right tabular-nums text-foreground py-2">{wTime.toFixed(1)}</td>
+              <tr className="border-t-2 border-border/60 text-base font-semibold">
+                <td className="py-3 text-muted-foreground uppercase tracking-wide text-xs">Weighted avg</td>
+                <td className={`text-right tabular-nums py-3 ${totalMix === 100 ? "text-foreground" : "text-aneko-warning"}`}><span className="inline-block w-20 pr-2">{totalMix}%</span></td>
+                <td className="text-right tabular-nums text-foreground py-3"><span className="inline-block w-24 pr-2">{fmtCurrency(wRev)}</span></td>
+                <td className="text-right tabular-nums text-foreground py-3"><span className="inline-block w-20 pr-2">{wTime.toFixed(1)}</span></td>
               </tr>
             </tbody>
           </table>
-          {totalMix !== 100 && <div className="text-sm text-aneko-warning mt-2 font-semibold">Mix = {totalMix}%</div>}
+          {totalMix !== 100 && (
+            <div className="mt-3 px-3 py-2 rounded-md bg-aneko-warning/10 flex items-start gap-2 text-sm">
+              <AlertCircle className="w-4 h-4 text-aneko-warning shrink-0 mt-0.5" />
+              <span className="text-aneko-warning font-medium">
+                Mix totals {totalMix}% — {totalMix > 100 ? `over by ${totalMix - 100}%` : `under by ${100 - totalMix}%`}. Weighted average is normalized; adjust inputs to total 100%.
+              </span>
+            </div>
+          )}
         </InputPanel>
       </div>
 
-      {/* Scenario results — efficiency sensitivity grid (narrower than full viewport) */}
-      <div className="shrink-0 w-full max-w-3xl mx-auto rounded-lg bg-aneko-elev border border-input px-4 py-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3 pb-2 border-b border-input">
-          <div>
-            <h2 className="text-sm uppercase tracking-wide font-bold text-foreground">Scenario results</h2>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Sensitivity analysis — how totals change at different efficiency assumptions (your current gain is highlighted).</p>
-          </div>
-          <span className="text-xs uppercase tracking-wide text-muted-foreground font-bold">Outputs</span>
+      {/* Scenario sensitivity */}
+      <div className="shrink-0 w-full rounded-lg bg-aneko-elev/60 px-5 py-4">
+        <div className="flex items-baseline justify-between mb-3">
+          <h2 className="text-base font-semibold text-foreground">Scenario sensitivity</h2>
+          <p className="text-xs text-muted-foreground">Current gain highlighted</p>
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
-              <th className="text-left py-2 font-bold">Efficiency</th>
-              <th className="text-right py-2 font-bold">Min/shift</th>
-              <th className="text-right py-2 font-bold">Studies/yr</th>
-              <th className="text-right py-2 font-bold">Revenue</th>
-              <th className="text-right py-2 font-bold">Labor reclaimed</th>
-              <th className="text-right py-2 font-bold">Total</th>
-              <th className="text-right py-2 font-bold">Equiv rads</th>
+            <tr className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
+              <th className="text-left pb-2 font-semibold">Efficiency</th>
+              <th className="text-right pb-2 font-semibold">Min/shift</th>
+              <th className="text-right pb-2 font-semibold">Studies/yr</th>
+              <th className="text-right pb-2 font-semibold">Revenue</th>
+              <th className="text-right pb-2 font-semibold">Labor reclaimed</th>
+              <th className="text-right pb-2 font-semibold">Total</th>
+              <th className="text-right pb-2 font-semibold">Equiv rads</th>
             </tr>
           </thead>
           <tbody>
             {scenarios.map((s) => {
               const active = Math.abs(s.pct - efficiencyGain) < 0.05;
               return (
-                <tr key={s.pct} className={`border-b border-border ${active ? "bg-aneko-elev" : ""}`}>
-                  <td className={`py-2 ${active ? "font-bold text-primary" : "text-foreground/90"}`}>{s.pct}%</td>
-                  <td className={`text-right tabular-nums py-2 ${active ? "text-foreground" : "text-foreground/90"}`}>{s.mR.toFixed(1)}</td>
-                  <td className={`text-right tabular-nums py-2 ${active ? "text-foreground" : "text-foreground/90"}`}>{fmt(s.ast)}</td>
-                  <td className={`text-right tabular-nums py-2 ${active ? "text-foreground" : "text-foreground/90"}`}>{fmtShort(s.rev)}</td>
-                  <td className={`text-right tabular-nums py-2 ${active ? "text-foreground" : "text-foreground/90"}`}>{fmtShort(s.lab)}</td>
-                  <td className={`text-right tabular-nums font-bold py-2 ${active ? "text-aneko-success" : "text-foreground"}`}>{fmtShort(s.total)}</td>
-                  <td className={`text-right tabular-nums py-2 ${active ? "text-foreground" : "text-foreground/90"}`}>{s.equiv.toFixed(1)}</td>
+                <tr key={s.pct} className={`border-t border-border/40 ${active ? "bg-primary/5" : ""}`}>
+                  <td className={`py-2.5 ${active ? "font-semibold text-primary" : "text-foreground"}`}>{s.pct}%</td>
+                  <td className="text-right tabular-nums py-2.5 text-foreground">{s.mR.toFixed(1)}</td>
+                  <td className="text-right tabular-nums py-2.5 text-foreground">{fmt(s.ast)}</td>
+                  <td className="text-right tabular-nums py-2.5 text-foreground">{fmtShort(s.rev)}</td>
+                  <td className="text-right tabular-nums py-2.5 text-foreground">{fmtShort(s.lab)}</td>
+                  <td className={`text-right tabular-nums py-2.5 font-semibold ${active ? "text-aneko-success" : "text-foreground"}`}>{fmtShort(s.total)}</td>
+                  <td className="text-right tabular-nums py-2.5 text-foreground">{s.equiv.toFixed(1)}</td>
                 </tr>
               );
             })}
@@ -587,110 +502,102 @@ function OpsView({ state, updOps }) {
   const o = useMemo(() => computeOps(state), [state]);
   const { rows, rankMap, maxAddr, totals, gap, status, corporateTargetPct } = o;
 
-  const toneClass = {
-    ok:   "border-aneko-success bg-aneko-deep",
-    warn: "border-aneko-warning bg-aneko-deep",
-    bad: "border-aneko-warning bg-aneko-deep",
-  }[status.tone];
   const toneText = { ok: "text-aneko-success", warn: "text-aneko-warning", bad: "text-aneko-warning" }[status.tone];
 
   return (
-    <div className="h-full flex flex-col gap-3 px-5 py-3 overflow-hidden">
-      {/* Top row: corporate target (read-only) + 4 outcome tiles */}
-      <div className="grid grid-cols-5 gap-3 shrink-0">
-        <Tile label="Corporate target (from Corporate tab)" value={`${corporateTargetPct.toFixed(1)}%`} sub="Efficiency gain assumption" />
-        <Tile label="Interrupted min / shift"  value={totals.tot.toFixed(1)}  sub={`${totals.totPct.toFixed(1)}% of shift`} />
-        <HeroTile label="Addressable min / shift" value={totals.addr.toFixed(1)} sub={`${totals.addrPct.toFixed(1)}% of shift`} />
-        <Tile label={`vs ${corporateTargetPct.toFixed(1)}% target`} value={`${gap >= 0 ? "+" : ""}${gap.toFixed(1)}%`} valueTone={status.tone === "bad" ? "orange" : status.tone === "warn" ? "orange" : "emerald"} />
-        <Tile label="Addressable hrs / yr"   value={fmt(totals.yearlyHrs)} />
+    <div className="h-full flex flex-col gap-6 px-8 py-6 overflow-hidden">
+      {/* Top row: outcome tiles */}
+      <div className="grid grid-cols-5 gap-4 shrink-0">
+        <Tile label="Corporate target" value={`${corporateTargetPct.toFixed(1)}%`} sub="from Corporate tab" />
+        <Tile label="Interrupted / shift" value={`${totals.tot.toFixed(1)} min`} sub={`${totals.totPct.toFixed(1)}%`} />
+        <HeroTile label="Addressable / shift" value={`${totals.addr.toFixed(1)} min`} sub={`${totals.addrPct.toFixed(1)}%`} />
+        <Tile label="Gap vs target" value={`${gap >= 0 ? "+" : ""}${gap.toFixed(1)}%`} valueTone={status.tone === "bad" || status.tone === "warn" ? "orange" : "emerald"} />
+        <Tile label="Addressable hrs / yr" value={fmt(totals.yearlyHrs)} sub="network-wide" />
       </div>
 
       {/* Main table */}
-      <div className="flex-1 min-h-0 rounded-md bg-aneko-deep border border-border flex flex-col overflow-hidden">
-        <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0">
-          <h2 className="text-sm uppercase tracking-wide text-foreground font-bold">Interruption inventory</h2>
-          <div className="text-xs text-muted-foreground">Per rad / shift · highlighted columns are editable</div>
+      <div className="flex-1 min-h-0 rounded-lg bg-aneko-elev/60 flex flex-col overflow-hidden">
+        <div className="px-5 pt-4 pb-3 flex items-center justify-between shrink-0">
+          <h2 className="text-base font-semibold text-foreground">Interruption inventory</h2>
+          <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Per rad / shift</div>
         </div>
         <div className="flex-1 overflow-auto">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-aneko-deep z-10">
-              <tr className="text-xs uppercase tracking-wide text-foreground/85 border-b border-border">
-                <th className="text-center px-2 py-2.5 w-10 font-bold">#</th>
-                <th className="text-left px-3 py-2.5 font-bold">Category</th>
-                <th className="text-left px-2 py-2.5 font-bold">Engine</th>
-                <th className="text-center px-2 py-2.5 border-l border-border font-bold text-muted-foreground" colSpan={2}>Public default</th>
-                <th className="text-center px-2 py-2.5 border-l border-primary/40 font-bold text-primary" colSpan={2}>MI-Calc · editable</th>
-                <th className="text-right px-2 py-2.5 border-l border-border font-bold">Lost/shift</th>
-                <th className="text-right px-2 py-2.5 font-bold text-primary">Addr %</th>
-                <th className="px-3 py-2.5 border-l border-border font-bold">Addressable</th>
+          <table className="w-full text-base">
+            <thead className="sticky top-0 bg-aneko-elev/95 backdrop-blur z-10">
+              <tr className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
+                <th className="text-center px-3 py-3 w-12">#</th>
+                <th className="text-left px-4 py-3">Category</th>
+                <th className="text-left px-3 py-3">Engine</th>
+                <th className="text-center px-3 py-3" colSpan={2}>Public default</th>
+                <th className="text-center px-3 py-3 text-primary" colSpan={2}>MI-Calc · editable</th>
+                <th className="text-right px-3 py-3">Lost/shift</th>
+                <th className="text-right px-3 py-3 text-primary">Addr %</th>
+                <th className="px-4 py-3">Addressable</th>
               </tr>
-              <tr className="text-xs text-muted-foreground bg-aneko-deep border-b border-border font-semibold">
+              <tr className="text-xs text-muted-foreground/80 font-medium border-b border-border/60">
                 <th></th><th></th><th></th>
-                <th className="text-center border-l border-border py-1">Freq</th><th className="text-center py-1">Min</th>
-                <th className="text-center border-l border-primary/40 py-1 text-primary">Freq</th><th className="text-center py-1 text-primary">Min</th>
-                <th className="border-l border-border"></th><th></th>
-                <th className="border-l border-border"></th>
+                <th className="text-center pb-2">Freq</th><th className="text-center pb-2">Min</th>
+                <th className="text-center pb-2 text-primary">Freq</th><th className="text-center pb-2 text-primary">Min</th>
+                <th></th><th></th><th></th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r, i) => {
                 const pctOfMax = (r.addr / maxAddr) * 100;
                 return (
-                  <tr key={r.id} className="border-b border-border hover:bg-aneko-elev/50">
-                    <td className="text-center align-middle px-2">
-                      <div className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-primary/15 border border-primary/30 text-primary text-sm font-bold tabular-nums">{rankMap.get(r.id)}</div>
+                  <tr key={r.id} className="border-t border-border/40 hover:bg-aneko-overlay/40 transition">
+                    <td className="text-center align-middle px-3 py-3">
+                      <div className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary/15 text-primary text-sm font-semibold tabular-nums">{rankMap.get(r.id)}</div>
                     </td>
-                    <td className="px-3 py-2.5 align-middle">
-                      <div className="font-semibold text-foreground text-sm">{r.category}</div>
+                    <td className="px-4 py-3 align-middle">
+                      <div className="font-medium text-foreground text-base">{r.category}</div>
                     </td>
-                    <td className="px-2 py-2.5 align-middle">
+                    <td className="px-3 py-3 align-middle">
                       <EngineBadge engine={r.engine} />
                     </td>
-                    <td className="px-2 py-2.5 text-center tabular-nums text-muted-foreground border-l border-border">{r.defaultFreq}</td>
-                    <td className="px-2 py-2.5 text-center tabular-nums text-muted-foreground">{r.defaultMins}</td>
-                    <td className="px-2 py-1.5 border-l border-primary/40">
-                      <CellInput value={r.idxFreq} step={0.1} onChange={(v) => updateRow(i, "idxFreq", v)} wider />
+                    <td className="px-3 py-3 text-center tabular-nums text-base text-muted-foreground">{r.defaultFreq}</td>
+                    <td className="px-3 py-3 text-center tabular-nums text-base text-muted-foreground">{r.defaultMins}</td>
+                    <td className="px-3 py-2">
+                      <CellInput value={r.idxFreq} onChange={(v) => updateRow(i, "idxFreq", v)} wider />
                     </td>
-                    <td className="px-2 py-1.5">
-                      <CellInput value={r.idxMins} step={0.1} onChange={(v) => updateRow(i, "idxMins", v)} wider />
+                    <td className="px-3 py-2">
+                      <CellInput value={r.idxMins} onChange={(v) => updateRow(i, "idxMins", v)} wider />
                     </td>
-                    <td className="px-2 py-2.5 text-right tabular-nums font-bold text-foreground border-l border-border">{r.timeLost.toFixed(1)}</td>
-                    <td className="px-2 py-1.5 text-right">
+                    <td className="px-3 py-3 text-right tabular-nums font-semibold text-base text-foreground">{r.timeLost.toFixed(1)}</td>
+                    <td className="px-3 py-2 text-right">
                       <CellInput value={r.addressablePct} onChange={(v) => updateRow(i, "addressablePct", v)} />
                     </td>
-                    <td className="px-3 py-2.5 border-l border-border">
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-aneko-elev rounded-sm h-2 overflow-hidden">
-                          <div className="bg-primary h-full" style={{ width: `${pctOfMax}%` }} />
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 bg-aneko-deep/60 rounded-full h-1.5 overflow-hidden">
+                          <div className="bg-primary h-full rounded-full" style={{ width: `${pctOfMax}%` }} />
                         </div>
-                        <div className="w-12 text-right tabular-nums font-bold text-foreground text-sm">{r.addr.toFixed(1)}</div>
+                        <div className="w-12 text-right tabular-nums font-semibold text-foreground text-base">{r.addr.toFixed(1)}</div>
                       </div>
                     </td>
                   </tr>
                 );
               })}
-              <tr className="font-bold border-t-2 border-border bg-aneko-deep text-base">
+              <tr className="font-semibold border-t-2 border-border/80 text-lg">
                 <td></td>
-                <td className="px-3 py-2.5 text-foreground" colSpan={2}>Total</td>
-                <td className="border-l border-border"></td><td></td>
-                <td className="border-l border-primary/40"></td><td></td>
-                <td className="px-2 py-2.5 text-right tabular-nums text-foreground border-l border-border">{totals.tot.toFixed(1)}</td>
+                <td className="px-4 py-3.5 text-muted-foreground uppercase tracking-wide text-xs" colSpan={2}>Total</td>
+                <td></td><td></td>
+                <td></td><td></td>
+                <td className="px-3 py-3.5 text-right tabular-nums text-foreground">{totals.tot.toFixed(1)}</td>
                 <td></td>
-                <td className="px-3 py-2.5 text-right tabular-nums text-aneko-success border-l border-border">{totals.addr.toFixed(1)}</td>
+                <td className="px-4 py-3.5 text-right tabular-nums text-aneko-success">{totals.addr.toFixed(1)}</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Reconciliation */}
-      <div className={`shrink-0 rounded-md border-l-4 px-4 py-2.5 ${toneClass} border-t border-r border-b border-border`}>
-        <div className="flex items-center gap-2.5">
-          <AlertCircle className={`w-5 h-5 shrink-0 ${toneText}`} />
-          <div className="flex-1 text-sm text-foreground/90">
-            <span className={`font-bold ${toneText}`}>{status.label}.</span>{" "}
-            Corporate target <strong className="text-foreground">{corporateTargetPct.toFixed(1)}%</strong> · Addressable interruptions <strong className="text-foreground">{totals.addrPct.toFixed(1)}%</strong> · Gap <strong className={toneText}>{gap >= 0 ? "+" : ""}{gap.toFixed(1)}%</strong>
-          </div>
+      {/* Reconciliation — flat inline strip */}
+      <div className="shrink-0 rounded-lg bg-aneko-elev/60 px-5 py-3 flex items-center gap-3">
+        <AlertCircle className={`w-5 h-5 shrink-0 ${toneText}`} />
+        <div className="flex-1 text-sm text-foreground/90">
+          <span className={`font-semibold ${toneText}`}>{status.label}.</span>{" "}
+          <span className="text-muted-foreground">Corporate target</span> <strong className="text-foreground tabular-nums">{corporateTargetPct.toFixed(1)}%</strong> <span className="text-muted-foreground/60 mx-1">·</span> <span className="text-muted-foreground">Addressable</span> <strong className="text-foreground tabular-nums">{totals.addrPct.toFixed(1)}%</strong> <span className="text-muted-foreground/60 mx-1">·</span> <span className="text-muted-foreground">Gap</span> <strong className={`tabular-nums ${toneText}`}>{gap >= 0 ? "+" : ""}{gap.toFixed(1)}%</strong>
         </div>
       </div>
     </div>
@@ -700,17 +607,17 @@ function OpsView({ state, updOps }) {
 // =============================================================================
 // SHARED COMPONENTS
 // =============================================================================
-// Aneko-style engine tag: colored pill matching the visual language of modality/status badges
+// Engine tag — borderless pill, lower font weight, reads as label not button
 function EngineBadge({ engine }) {
   const map = {
-    Comms:      "bg-violet-500/15 text-violet-300 border-violet-500/30",
-    Intake:     "bg-primary/15 text-primary border-primary/30",
-    Preference: "bg-aneko-warning/15 text-aneko-warning border-aneko-warning/30",
-    General:    "bg-slate-500/15 text-slate-300 border-slate-500/30",
+    Comms:      "bg-violet-500/15 text-violet-300",
+    Intake:     "bg-primary/15 text-primary",
+    Preference: "bg-aneko-warning/15 text-aneko-warning",
+    General:    "bg-slate-500/15 text-slate-300",
   };
-  const cls = map[engine] || "bg-slate-500/15 text-slate-300 border-slate-500/30";
+  const cls = map[engine] || "bg-slate-500/15 text-slate-300";
   return (
-    <span className={`inline-flex items-center px-2 py-1 rounded border text-xs font-bold tracking-wide ${cls}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cls}`}>
       {engine}
     </span>
   );
@@ -718,13 +625,16 @@ function EngineBadge({ engine }) {
 
 function TabButton({ active, onClick, icon, children }) {
   return (
-    <button onClick={onClick}
-      className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition ${
+    <button
+      onClick={onClick}
+      className={`relative inline-flex items-center gap-2 px-4 h-full text-sm font-semibold transition focus-visible:outline-none ${
         active
-          ? "bg-primary/15 text-primary border border-primary/40"
-          : "text-muted-foreground hover:text-foreground hover:bg-aneko-elev border border-transparent"
-      }`}>
+          ? "text-foreground"
+          : "text-muted-foreground hover:text-foreground"
+      }`}
+    >
       {icon} {children}
+      {active && <span className="absolute left-3 right-3 bottom-0 h-0.5 rounded-full bg-primary" />}
     </button>
   );
 }
@@ -738,89 +648,126 @@ function SaveIndicator({ visible }) {
   );
 }
 
-// Compact input — label + field, board-readable text sizes
-function InputCard({ label, value, onChange, prefix, step = 1 }) {
+// Free-typing input with local draft + select-on-focus, board-readable size
+function InputCard({ label, value, onChange, prefix }) {
+  const [draft, setDraft] = useState(String(value));
+  const [focused, setFocused] = useState(false);
+  useEffect(() => { if (!focused) setDraft(String(value)); }, [value, focused]);
   return (
     <div>
-      <label className="text-xs uppercase tracking-wide text-muted-foreground font-bold block mb-1.5">{label}</label>
+      <label className="text-sm uppercase tracking-wide text-muted-foreground font-bold block mb-1.5">{label}</label>
       <div className="relative">
         {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base">{prefix}</span>}
-        <input type="number" step={step} value={value} onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          className={`w-full bg-aneko-deep border border-border rounded ${prefix ? "pl-7" : "pl-3"} pr-3 py-2 text-lg font-bold tabular-nums text-foreground hover:border-primary/50 focus:border-primary focus:outline-none transition`} />
+        <input
+          type="text"
+          inputMode="decimal"
+          value={draft}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === "" || /^-?\d*\.?\d*$/.test(v)) {
+              setDraft(v);
+              if (v !== "" && v !== "-" && v !== ".") {
+                const n = parseFloat(v);
+                if (!isNaN(n)) onChange(n);
+              } else if (v === "") {
+                onChange(0);
+              }
+            }
+          }}
+          onFocus={(e) => { setFocused(true); e.target.select(); }}
+          onBlur={() => setFocused(false)}
+          className={`w-full bg-aneko-deep border border-border rounded ${prefix ? "pl-7" : "pl-3"} pr-3 py-2 text-lg font-bold tabular-nums text-foreground hover:border-primary/50 focus:border-primary focus:outline-none transition`}
+        />
       </div>
     </div>
   );
 }
 
-// Stat tile — readable label + large value, compact padding
-function Tile({ label, value, sub, icon, valueTone }) {
+// Stat tile — borderless, elevation-only, calm typography
+function Tile({ label, value, sub, valueTone }) {
   const valueClass =
     valueTone === "emerald" ? "text-aneko-success"
     : valueTone === "orange" ? "text-aneko-warning"
     : "text-foreground";
   return (
-    <div className="rounded bg-aneko-elev/40 border border-border px-3 py-2.5">
-      <div className="flex items-center justify-between gap-2">
-        <div className="text-xs uppercase tracking-wide text-muted-foreground font-bold leading-tight truncate">{label}</div>
-        {icon && <div className="text-muted-foreground/70 shrink-0">{icon}</div>}
-      </div>
-      <div className="flex items-baseline justify-between gap-2 mt-1">
-        <div className={`text-2xl font-black tabular-nums leading-tight ${valueClass}`}>{value}</div>
-        {sub && <div className="text-xs text-muted-foreground tabular-nums">{sub}</div>}
+    <div className="rounded-lg bg-aneko-elev/60 px-4 py-3">
+      <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold truncate">{label}</div>
+      <div className="flex items-baseline justify-between gap-2 mt-2">
+        <div className={`text-3xl font-bold tabular-nums leading-none ${valueClass}`}>{value}</div>
+        {sub && <div className="text-sm text-muted-foreground tabular-nums">{sub}</div>}
       </div>
     </div>
   );
 }
 
-// Hero tile — same compact footprint, success accent
-function HeroTile({ label, value, sub, icon }) {
+// Hero tile — neutral surface, single bold accent on value only
+function HeroTile({ label, value, sub }) {
   return (
-    <div className="rounded bg-aneko-success/10 border border-aneko-success/40 px-3 py-2.5">
-      <div className="flex items-center justify-between gap-2">
-        <div className="text-xs uppercase tracking-wide text-aneko-success font-bold leading-tight truncate">{label}</div>
-        {icon && <div className="text-aneko-success shrink-0">{icon}</div>}
-      </div>
-      <div className="flex items-baseline justify-between gap-2 mt-1">
-        <div className="text-2xl font-black tabular-nums leading-tight text-aneko-success">{value}</div>
-        {sub && <div className="text-xs text-aneko-success/80 tabular-nums">{sub}</div>}
+    <div className="rounded-lg bg-aneko-elev/60 ring-1 ring-aneko-success/30 px-4 py-3">
+      <div className="text-xs uppercase tracking-widest text-aneko-success font-semibold truncate">{label}</div>
+      <div className="flex items-baseline justify-between gap-2 mt-2">
+        <div className="text-3xl font-bold tabular-nums leading-none text-aneko-success">{value}</div>
+        {sub && <div className="text-sm text-muted-foreground tabular-nums">{sub}</div>}
       </div>
     </div>
   );
 }
 
-// Input panel — neutral surface, readable header
+// Input panel — borderless surface, single section heading
 function InputPanel({ title, children, className = "" }) {
   return (
-    <div className={`rounded-md bg-aneko-elev/40 border border-border flex flex-col overflow-hidden ${className}`}>
-      <div className="px-3 py-2 border-b border-border shrink-0 bg-aneko-deep flex items-center justify-between">
-        <span className="text-sm uppercase tracking-wide text-foreground font-bold">{title}</span>
-        <span className="text-xs uppercase tracking-wide text-muted-foreground font-bold">Inputs</span>
+    <div className={`rounded-lg bg-aneko-elev/60 flex flex-col overflow-hidden ${className}`}>
+      <div className="px-4 pt-3 pb-2 shrink-0">
+        <span className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">{title}</span>
       </div>
-      <div className="p-3 space-y-3">{children}</div>
+      <div className="px-4 pb-4 space-y-4">{children}</div>
     </div>
   );
 }
 
-function SliderInput({ label, value, min, max, step, onChange, display, minL, maxL }) {
+function SliderInput({ label, value, min, max, step, onChange, display }) {
   return (
     <div>
-      <div className="flex justify-between items-baseline mb-1.5">
+      <div className="flex justify-between items-baseline mb-2">
         <label className="text-sm font-semibold text-foreground">{label}</label>
-        <span className="text-base tabular-nums font-bold text-primary">{display}</span>
+        <span className="text-lg tabular-nums font-bold text-primary leading-none">{display}</span>
       </div>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full accent-primary" />
-      <div className="flex justify-between text-xs text-muted-foreground mt-0.5">
-        <span>{minL}</span><span>{maxL}</span>
-      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="w-full accent-primary cursor-pointer"
+      />
     </div>
   );
 }
 
-function CellInput({ value, onChange, step = 1, wider = false }) {
+function CellInput({ value, onChange, wider = false }) {
+  const [draft, setDraft] = useState(String(value));
+  const [focused, setFocused] = useState(false);
+  useEffect(() => { if (!focused) setDraft(String(value)); }, [value, focused]);
   return (
-    <input type="number" step={step} value={value} onChange={(e) => onChange(e.target.value)}
-      className={`${wider ? "w-20" : "w-16"} text-right bg-aneko-deep border border-border rounded px-2 py-1.5 tabular-nums text-sm font-bold text-foreground hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none transition`} />
+    <input
+      type="text"
+      inputMode="decimal"
+      value={draft}
+      onChange={(e) => {
+        const v = e.target.value;
+        if (v === "" || /^-?\d*\.?\d*$/.test(v)) {
+          setDraft(v);
+          if (v !== "" && v !== "-" && v !== ".") {
+            const n = parseFloat(v);
+            if (!isNaN(n)) onChange(n);
+          }
+        }
+      }}
+      onFocus={(e) => { setFocused(true); e.target.select(); }}
+      onBlur={() => { setFocused(false); }}
+      className={`${wider ? "w-24" : "w-20"} text-right bg-aneko-deep border border-border rounded px-2.5 py-2 tabular-nums text-base font-bold text-foreground hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none transition`}
+    />
   );
 }
 
