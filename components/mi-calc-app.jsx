@@ -498,6 +498,7 @@ function BoardView({ state, updBoard }) {
   const flashStudies = useFlash(addStudiesYr);
   const flashLabor = useFlash(laborSaved);
   const flashEquiv = useFlash(equivRads);
+  const flashReclaimed = useFlash(minReclaimed);
 
   const { radiologists } = state.shared;
 
@@ -528,57 +529,59 @@ function BoardView({ state, updBoard }) {
           </p>
         </section>
 
-        {/* Bridge + Capacity side-by-side on lg+, stacked otherwise */}
-        <div className="shrink-0 grid grid-cols-1 lg:grid-cols-5 gap-4">
-          {/* Bridge table */}
-          <section className="lg:col-span-3 rounded-lg bg-aneko-elev/60 px-5 py-4">
-            <div className="flex items-baseline justify-between mb-3">
-              <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">How it adds up</h3>
-              <span className="text-[11px] text-muted-foreground">AUD / year</span>
+        {/* Key metrics — minutes reclaimed first (drives everything downstream) */}
+        <section className="shrink-0 rounded-lg bg-aneko-elev/60 px-5 py-4 ring-1 ring-primary/15">
+          <div className="flex items-baseline justify-between mb-3">
+            <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Key metrics</h3>
+            <span className="text-[11px] text-muted-foreground">Operational · network-wide where noted</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div>
+              <div className="text-[11px] uppercase tracking-widest text-primary font-semibold leading-tight">Minutes reclaimed / shift</div>
+              <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashReclaimed ? "text-primary" : "text-foreground"}`}>{minReclaimed.toFixed(1)} min</div>
+              <div className="text-[11px] text-muted-foreground mt-1">Per radiologist · from modeled efficiency gain</div>
             </div>
-            <table className="w-full text-sm">
-              <tbody>
-                <tr className="border-t border-border/40">
-                  <th scope="row" className="py-2.5 text-left font-medium text-foreground">
-                    Revenue unlocked
-                    <span className="block text-[11px] font-normal text-muted-foreground">From extra studies read per shift</span>
-                  </th>
-                  <td className={`py-2.5 text-right tabular-nums font-semibold text-2xl transition-colors duration-500 ${flashRev ? "text-primary" : "text-foreground"}`}>{fmtCurrency(revenueUnlocked)}</td>
-                </tr>
-                <tr className="border-t border-border/40">
-                  <th scope="row" className="py-2.5 text-left font-medium text-foreground">
-                    + Realized efficiency
-                    <span className="block text-[11px] font-normal text-muted-foreground">Dollar value of efficiency gains not reinvested in additional reads</span>
-                  </th>
-                  <td className={`py-2.5 text-right tabular-nums font-semibold text-2xl transition-colors duration-500 ${flashLabor ? "text-primary" : "text-foreground"}`}>{fmtCurrency(laborSaved)}</td>
-                </tr>
-              </tbody>
-            </table>
-            <p className="text-[11px] text-muted-foreground mt-3 pt-3 border-t border-border/40">
-              These two components sum to the total annual value at the top.
-            </p>
-          </section>
+            <div>
+              <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Studies / yr</div>
+              <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashStudies ? "text-primary" : "text-foreground"}`}>{fmt(addStudiesYr)}</div>
+              <div className="text-[11px] text-muted-foreground mt-1">Extra studies read</div>
+            </div>
+            <div>
+              <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Equiv. radiologists</div>
+              <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashEquiv ? "text-primary" : "text-foreground"}`}>{equivRads.toFixed(1)}</div>
+              <div className="text-[11px] text-muted-foreground mt-1">Net new clinical capacity</div>
+            </div>
+          </div>
+        </section>
 
-          {/* Capacity impact */}
-          <section className="lg:col-span-2 rounded-lg bg-aneko-elev/60 px-5 py-4">
-            <div className="flex items-baseline justify-between mb-3">
-              <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Capacity impact</h3>
-              <span className="text-[11px] text-muted-foreground">Non-dollar</span>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Studies / yr</div>
-                <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashStudies ? "text-primary" : "text-foreground"}`}>{fmt(addStudiesYr)}</div>
-                <div className="text-[11px] text-muted-foreground mt-1">Extra studies read</div>
-              </div>
-              <div>
-                <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Equiv. radiologists</div>
-                <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashEquiv ? "text-primary" : "text-foreground"}`}>{equivRads.toFixed(1)}</div>
-                <div className="text-[11px] text-muted-foreground mt-1">Net new clinical capacity</div>
-              </div>
-            </div>
-          </section>
-        </div>
+        {/* Bridge — dollars */}
+        <section className="shrink-0 rounded-lg bg-aneko-elev/60 px-5 py-4">
+          <div className="flex items-baseline justify-between mb-3">
+            <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">How it adds up</h3>
+            <span className="text-[11px] text-muted-foreground">AUD / year</span>
+          </div>
+          <table className="w-full text-sm">
+            <tbody>
+              <tr className="border-t border-border/40">
+                <th scope="row" className="py-2.5 text-left font-medium text-foreground">
+                  Revenue unlocked
+                  <span className="block text-[11px] font-normal text-muted-foreground">From extra studies read per shift</span>
+                </th>
+                <td className={`py-2.5 text-right tabular-nums font-semibold text-2xl transition-colors duration-500 ${flashRev ? "text-primary" : "text-foreground"}`}>{fmtCurrency(revenueUnlocked)}</td>
+              </tr>
+              <tr className="border-t border-border/40">
+                <th scope="row" className="py-2.5 text-left font-medium text-foreground">
+                  + Realized efficiency
+                  <span className="block text-[11px] font-normal text-muted-foreground">Dollar value of efficiency gains not reinvested in additional reads</span>
+                </th>
+                <td className={`py-2.5 text-right tabular-nums font-semibold text-2xl transition-colors duration-500 ${flashLabor ? "text-primary" : "text-foreground"}`}>{fmtCurrency(laborSaved)}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p className="text-[11px] text-muted-foreground mt-3 pt-3 border-t border-border/40">
+            These two components sum to the total annual value at the top.
+          </p>
+        </section>
 
         {/* Scenario drivers — full width of shell */}
         <section className="shrink-0 rounded-lg bg-aneko-elev/60 px-5 py-4">
