@@ -8,21 +8,21 @@ import {
 import * as XLSX from "xlsx";
 
 // =============================================================================
-// MI-Calc — Unified calculator (Aneko AI)
-// UI tokens match Ask-Clarifier: see app/globals.css + tailwind aneko.*
+// ROI Calculator — Aneko AI
 // =============================================================================
 
 const STORAGE_KEY = "mi-calc-v1";
 const APP_VERSION = "1.0.0";
 
 const DEFAULT_MODALITIES = [
-  { name: "X-ray",       mixPct: 45, revenuePerStudy: 55,  readMinutes: 3 },
-  { name: "Ultrasound",  mixPct: 20, revenuePerStudy: 180, readMinutes: 10 },
-  { name: "CT",          mixPct: 20, revenuePerStudy: 350, readMinutes: 12 },
-  { name: "MRI",         mixPct: 8,  revenuePerStudy: 450, readMinutes: 18 },
-  { name: "Mammography", mixPct: 4,  revenuePerStudy: 120, readMinutes: 5 },
-  { name: "Nuclear Med", mixPct: 2,  revenuePerStudy: 600, readMinutes: 15 },
-  { name: "Fluoroscopy", mixPct: 1,  revenuePerStudy: 280, readMinutes: 8 },
+  { name: "X-ray",        mixPct: 45, revenuePerStudy: 55,  readMinutes: 3 },
+  { name: "Ultrasound",   mixPct: 20, revenuePerStudy: 180, readMinutes: 10 },
+  { name: "CT",           mixPct: 20, revenuePerStudy: 350, readMinutes: 12 },
+  { name: "MRI",          mixPct: 8,  revenuePerStudy: 450, readMinutes: 18 },
+  { name: "Mammography",  mixPct: 4,  revenuePerStudy: 120, readMinutes: 5 },
+  { name: "Nuclear Med",  mixPct: 2,  revenuePerStudy: 600, readMinutes: 15 },
+  { name: "Fluoroscopy",  mixPct: 1,  revenuePerStudy: 280, readMinutes: 8 },
+  { name: "Other / misc", mixPct: 0,  revenuePerStudy: 200, readMinutes: 8 },
 ];
 
 const DEFAULT_INTERRUPTIONS = [
@@ -78,6 +78,21 @@ function persist(state) {
   try {
     if (typeof window !== "undefined") window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch { /* storage unavailable */ }
+}
+
+// ---------- flash hook: briefly tint a value indigo when it just changed (Pitch-style cause/effect link) ----------
+function useFlash(value, ms = 600) {
+  const [flash, setFlash] = useState(false);
+  const prev = useRef(value);
+  useEffect(() => {
+    if (prev.current !== value) {
+      prev.current = value;
+      setFlash(true);
+      const t = setTimeout(() => setFlash(false), ms);
+      return () => clearTimeout(t);
+    }
+  }, [value, ms]);
+  return flash;
 }
 
 // ---------- formatters ----------
@@ -170,7 +185,7 @@ function exportWorkbook(state) {
 
   // Sheet 1: Assumptions
   const assumptions = [
-    ["MI-Calc × Aneko AI — ROI Scenario"],
+    ["Aneko AI — ROI Scenario"],
     ["Generated", today],
     [],
     ["SHARED"],
@@ -182,10 +197,10 @@ function exportWorkbook(state) {
     ["CORPORATE DRIVERS"],
     ["Efficiency gain %", state.board.efficiencyGain],
     ["Reinvest to capacity %", state.board.reinvestPct],
-    ["Engagement cost (AUD)", state.board.engagementCost],
+    ["Investment cost (AUD)", state.board.engagementCost],
     [],
     ["STUDY MIX"],
-    ["Modality", "Mix %", "Revenue per study (AUD)", "Read minutes"],
+    ["Modality", "Volume mix %", "Revenue per study (AUD)", "Read minutes"],
     ...state.board.modalities.map(m => [m.name, m.mixPct, m.revenuePerStudy, m.readMinutes]),
     ["Weighted average", c.totalMix, Number(c.wRev.toFixed(2)), Number(c.wTime.toFixed(2))],
   ];
@@ -209,7 +224,7 @@ function exportWorkbook(state) {
     ["Equivalent radiologists", Number(c.equivRads.toFixed(2))],
     [],
     ["SENSITIVITY"],
-    ["Efficiency %", "Min/shift", "Studies/yr", "Revenue (AUD)", "Labor reclaimed (AUD)", "Total (AUD)", "Equiv rads"],
+    ["Efficiency gain %", "Reclaimed / shift (min)", "Additional studies / yr", "Revenue unlocked (AUD)", "Labor reclaimed (AUD)", "Total annual value (AUD)", "Equivalent rads"],
     ...c.scenarios.map(s => [s.pct, Number(s.mR.toFixed(2)), Math.round(s.ast), Math.round(s.rev), Math.round(s.lab), Math.round(s.total), Number(s.equiv.toFixed(2))]),
   ];
   const corpSheet = XLSX.utils.aoa_to_sheet(corp);
@@ -223,9 +238,9 @@ function exportWorkbook(state) {
     ["Corporate efficiency target (from Corporate tab, %)", o.corporateTargetPct],
     [],
     ["INTERRUPTION INVENTORY"],
-    ["Rank", "Category", "Engine", "Default freq", "Default min", "MI-Calc freq", "MI-Calc min", "Lost / shift (min)", "Addressable %", "Addressable (min)"],
-    ...o.ranked.map(r => [o.rankMap.get(r.id), r.category, r.engine, r.defaultFreq, r.defaultMins, r.idxFreq, r.idxMins, Number(r.timeLost.toFixed(2)), r.addressablePct, Number(r.addr.toFixed(2))]),
-    ["", "TOTAL", "", "", "", "", "", Number(o.totals.tot.toFixed(2)), "", Number(o.totals.addr.toFixed(2))],
+    ["Rank", "Category", "Engine", "Frequency / shift", "Minutes each", "Time / shift (min)", "Addressable %", "Addressable (min)"],
+    ...o.ranked.map(r => [o.rankMap.get(r.id), r.category, r.engine, r.idxFreq, r.idxMins, Number(r.timeLost.toFixed(2)), r.addressablePct, Number(r.addr.toFixed(2))]),
+    ["", "TOTAL", "", "", "", Number(o.totals.tot.toFixed(2)), "", Number(o.totals.addr.toFixed(2))],
     [],
     ["RECONCILIATION"],
     ["Corporate efficiency target (%)", o.corporateTargetPct],
@@ -235,10 +250,10 @@ function exportWorkbook(state) {
     ["Network-wide addressable hours / yr", Math.round(o.totals.yearlyHrs)],
   ];
   const opsSheet = XLSX.utils.aoa_to_sheet(ops);
-  opsSheet["!cols"] = [{ wch: 6 }, { wch: 44 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 16 }, { wch: 14 }, { wch: 16 }];
+  opsSheet["!cols"] = [{ wch: 6 }, { wch: 44 }, { wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 18 }, { wch: 14 }, { wch: 16 }];
   XLSX.utils.book_append_sheet(wb, opsSheet, "Operations");
 
-  XLSX.writeFile(wb, `mi-calc-roi-${today}.xlsx`);
+  XLSX.writeFile(wb, `aneko-roi-${today}.xlsx`);
 }
 
 // =============================================================================
@@ -275,10 +290,9 @@ export default function App() {
       {/* Top bar */}
       <header className="px-8 h-16 flex items-center justify-between gap-6 bg-aneko-deep shrink-0">
         <div className="flex items-center gap-4">
-          <img src="/favicon.svg" alt="Aneko" className="w-8 h-8 rounded-md" />
-          <div className="text-foreground font-bold tracking-[0.18em] text-sm">ANEKO</div>
+          <img src="/logo.svg" alt="Aneko" className="h-7" />
           <div className="h-5 w-px bg-border" />
-          <div className="text-base font-semibold text-foreground/90">MI-Calc</div>
+          <div className="text-base font-semibold text-foreground/90">ROI Calculator</div>
         </div>
 
         {/* Tabs — bottom-underline indicator */}
@@ -339,53 +353,71 @@ function BoardView({ state, updBoard }) {
   const c = useMemo(() => computeCorporate(state), [state]);
   const { wRev, wTime, totalMix, minReclaimed, capMin, labMin, addStudiesYr, revenueUnlocked, laborSaved, equivRads, totalValue, breakevenMo, scenarios } = c;
 
+  // Pitch-style: indigo flash when a value just changed, fades back to its semantic color
+  const flashTotal = useFlash(totalValue);
+  const flashRev = useFlash(revenueUnlocked);
+  const flashStudies = useFlash(addStudiesYr);
+  const flashLabor = useFlash(laborSaved);
+  const flashEquiv = useFlash(equivRads);
+
   return (
-    <div className="h-full flex flex-col gap-6 px-8 py-6 min-h-0 overflow-y-auto">
-      {/* Headline: revenue unlocked + breakdown */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
-        <div className="md:col-span-2 rounded-lg bg-aneko-elev/60 px-6 py-5">
-          <div className="text-xs uppercase tracking-widest text-aneko-success font-semibold">Total annual value</div>
-          <div className="flex items-baseline gap-3 mt-2">
-            <div className="tabular-nums font-bold text-5xl text-aneko-success leading-none">{fmtCurrency(totalValue)}</div>
-            <div className="text-sm text-muted-foreground">at {efficiencyGain.toFixed(1)}% efficiency gain</div>
-          </div>
-          <div className="grid grid-cols-2 gap-6 mt-5 pt-4 border-t border-border/60">
-            <div>
-              <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Revenue unlocked</div>
-              <div className="tabular-nums font-bold text-2xl text-foreground mt-1">{fmtCurrency(revenueUnlocked)}</div>
-              <div className="text-xs text-muted-foreground mt-1">from {fmt(addStudiesYr)} additional studies</div>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Labor value reclaimed</div>
-              <div className="tabular-nums font-bold text-2xl text-foreground mt-1">{fmtCurrency(laborSaved)}</div>
-              <div className="text-xs text-muted-foreground mt-1">≈ {equivRads.toFixed(1)} equivalent radiologists</div>
-            </div>
-          </div>
+    <div className="h-full flex flex-col gap-4 px-8 py-5 min-h-0 overflow-hidden">
+      {/* Headline: total value + breakdown (full width) */}
+      <div className="rounded-lg bg-aneko-elev/60 px-5 py-4 shrink-0">
+        <div className="text-xs uppercase tracking-widest text-aneko-success font-semibold">Total annual value <span className="text-muted-foreground/70 font-medium normal-case tracking-normal">(AUD)</span></div>
+        <div className="flex items-baseline gap-3 mt-1.5">
+          <div className={`tabular-nums font-bold text-4xl leading-none transition-colors duration-500 ${flashTotal ? "text-primary" : "text-aneko-success"}`}>{fmtCurrency(totalValue)}</div>
+          <div className="text-sm text-muted-foreground">at {efficiencyGain.toFixed(1)}% efficiency gain</div>
         </div>
-        <div className="rounded-lg bg-aneko-elev/60 px-6 py-5">
-          <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Time reclaimed / shift</div>
-          <div className="tabular-nums font-bold text-5xl text-foreground leading-none mt-2">{minReclaimed.toFixed(1)}<span className="text-lg text-muted-foreground font-normal ml-1.5">min</span></div>
-          <div className="space-y-1.5 mt-5 pt-4 border-t border-border/60 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Capacity ({reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{capMin.toFixed(1)} min</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Labor bank ({100-reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{labMin.toFixed(1)} min</span></div>
+        <div className="grid grid-cols-4 gap-4 mt-3 pt-3 border-t border-border/60">
+          <div>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Revenue unlocked</div>
+            <div className={`tabular-nums font-bold text-2xl mt-1 transition-colors duration-500 ${flashRev ? "text-primary" : "text-foreground"}`}>{fmtCurrency(revenueUnlocked)}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Additional studies / yr</div>
+            <div className={`tabular-nums font-bold text-2xl mt-1 transition-colors duration-500 ${flashStudies ? "text-primary" : "text-foreground"}`}>{fmt(addStudiesYr)}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Labor value reclaimed</div>
+            <div className={`tabular-nums font-bold text-2xl mt-1 transition-colors duration-500 ${flashLabor ? "text-primary" : "text-foreground"}`}>{fmtCurrency(laborSaved)}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Equivalent radiologists</div>
+            <div className={`tabular-nums font-bold text-2xl mt-1 transition-colors duration-500 ${flashEquiv ? "text-primary" : "text-foreground"}`}>{equivRads.toFixed(1)}</div>
+            <div className="text-[11px] text-muted-foreground mt-0.5">Net new clinical capacity</div>
           </div>
         </div>
       </div>
 
       {/* Inputs: drivers + study mix */}
-      <div className="grid grid-cols-12 gap-4 shrink-0">
+      <div className="grid grid-cols-12 gap-4 shrink-0 min-h-0">
         {/* Drivers */}
         <InputPanel title="Drivers" className="col-span-6">
-          <SliderInput label="Efficiency gain" value={efficiencyGain} min={0.5} max={10} step={0.1}
-            onChange={(v) => updBoard("efficiencyGain", v)}
-            display={`${efficiencyGain.toFixed(1)}%`} />
+          <div>
+            <SliderInput label="Efficiency gain" value={efficiencyGain} min={0} max={10} step={0.1}
+              onChange={(v) => updBoard("efficiencyGain", v)}
+              display={`${efficiencyGain.toFixed(1)}%`}
+              minL="0%" maxL="10%" />
+            <div className="mt-2 flex items-baseline justify-between text-sm">
+              <span className="text-muted-foreground">Reclaimed / shift</span>
+              <span className="tabular-nums font-semibold text-foreground">{minReclaimed.toFixed(1)} min</span>
+            </div>
+          </div>
 
-          <SliderInput label="Reinvest to capacity" value={reinvestPct} min={0} max={100} step={5}
-            onChange={(v) => updBoard("reinvestPct", v)}
-            display={`${reinvestPct}%`} />
+          <div>
+            <SliderInput label="Time used for more reads" value={reinvestPct} min={0} max={100} step={5}
+              onChange={(v) => updBoard("reinvestPct", v)}
+              display={`${reinvestPct}%`}
+              minL="0%" maxL="100%" />
+            <div className="mt-2 space-y-1 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">More reads ({reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{capMin.toFixed(1)} min / shift</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Time off the clock ({100-reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{labMin.toFixed(1)} min / shift</span></div>
+            </div>
+          </div>
 
           <div className="pt-3 border-t border-border/40">
-            <label className="block text-sm font-semibold text-foreground mb-2">Engagement cost</label>
+            <label className="block text-sm font-semibold text-foreground mb-2">Investment cost</label>
             <div className="flex gap-3 items-center">
               <div className="relative flex-1">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base">$</span>
@@ -414,9 +446,9 @@ function BoardView({ state, updBoard }) {
             <thead>
               <tr className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
                 <th className="text-left pb-2 font-semibold">Modality</th>
-                <th className="text-right pb-2 font-semibold pr-2">Mix %</th>
-                <th className="text-right pb-2 font-semibold pr-2">Rev $</th>
-                <th className="text-right pb-2 font-semibold pr-2">Min</th>
+                <th className="text-right pb-2 font-semibold pr-2">Volume mix %</th>
+                <th className="text-right pb-2 font-semibold pr-2">Revenue / study</th>
+                <th className="text-right pb-2 font-semibold pr-2">Read minutes</th>
               </tr>
             </thead>
             <tbody>
@@ -428,6 +460,19 @@ function BoardView({ state, updBoard }) {
                   <td className="text-right py-1.5"><CellInput value={m.readMinutes} onChange={(v) => updateModality(i, "readMinutes", v)} /></td>
                 </tr>
               ))}
+              {totalMix !== 100 && (
+                <tr className="border-t border-border/40 bg-aneko-warning/10">
+                  <td className="py-2 pl-1 text-aneko-warning text-sm font-semibold uppercase tracking-wide">
+                    {totalMix > 100 ? "Over by" : "Remaining"}
+                  </td>
+                  <td className="text-right py-2 pr-2">
+                    <span className="inline-block w-20 pr-2 text-aneko-warning font-bold tabular-nums text-base">
+                      {totalMix > 100 ? `−${totalMix - 100}%` : `+${100 - totalMix}%`}
+                    </span>
+                  </td>
+                  <td colSpan={2}></td>
+                </tr>
+              )}
               <tr className="border-t-2 border-border/60 text-base font-semibold">
                 <td className="py-3 text-muted-foreground uppercase tracking-wide text-xs">Weighted avg</td>
                 <td className={`text-right tabular-nums py-3 ${totalMix === 100 ? "text-foreground" : "text-aneko-warning"}`}><span className="inline-block w-20 pr-2">{totalMix}%</span></td>
@@ -436,14 +481,6 @@ function BoardView({ state, updBoard }) {
               </tr>
             </tbody>
           </table>
-          {totalMix !== 100 && (
-            <div className="mt-3 px-3 py-2 rounded-md bg-aneko-warning/10 flex items-start gap-2 text-sm">
-              <AlertCircle className="w-4 h-4 text-aneko-warning shrink-0 mt-0.5" />
-              <span className="text-aneko-warning font-medium">
-                Mix totals {totalMix}% — {totalMix > 100 ? `over by ${totalMix - 100}%` : `under by ${100 - totalMix}%`}. Weighted average is normalized; adjust inputs to total 100%.
-              </span>
-            </div>
-          )}
         </InputPanel>
       </div>
 
@@ -456,13 +493,13 @@ function BoardView({ state, updBoard }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
-              <th className="text-left pb-2 font-semibold">Efficiency</th>
-              <th className="text-right pb-2 font-semibold">Min/shift</th>
-              <th className="text-right pb-2 font-semibold">Studies/yr</th>
-              <th className="text-right pb-2 font-semibold">Revenue</th>
+              <th className="text-left pb-2 font-semibold">Efficiency gain</th>
+              <th className="text-right pb-2 font-semibold">Reclaimed / shift</th>
+              <th className="text-right pb-2 font-semibold">Additional studies / yr</th>
+              <th className="text-right pb-2 font-semibold">Revenue unlocked</th>
               <th className="text-right pb-2 font-semibold">Labor reclaimed</th>
-              <th className="text-right pb-2 font-semibold">Total</th>
-              <th className="text-right pb-2 font-semibold">Equiv rads</th>
+              <th className="text-right pb-2 font-semibold">Total annual value</th>
+              <th className="text-right pb-2 font-semibold">Equivalent rads</th>
             </tr>
           </thead>
           <tbody>
@@ -528,17 +565,11 @@ function OpsView({ state, updOps }) {
                 <th className="text-center px-3 py-3 w-12">#</th>
                 <th className="text-left px-4 py-3">Category</th>
                 <th className="text-left px-3 py-3">Engine</th>
-                <th className="text-center px-3 py-3" colSpan={2}>Public default</th>
-                <th className="text-center px-3 py-3 text-primary" colSpan={2}>MI-Calc · editable</th>
-                <th className="text-right px-3 py-3">Lost/shift</th>
-                <th className="text-right px-3 py-3 text-primary">Addr %</th>
-                <th className="px-4 py-3">Addressable</th>
-              </tr>
-              <tr className="text-xs text-muted-foreground/80 font-medium border-b border-border/60">
-                <th></th><th></th><th></th>
-                <th className="text-center pb-2">Freq</th><th className="text-center pb-2">Min</th>
-                <th className="text-center pb-2 text-primary">Freq</th><th className="text-center pb-2 text-primary">Min</th>
-                <th></th><th></th><th></th>
+                <th className="text-center px-3 py-3">Frequency / shift</th>
+                <th className="text-center px-3 py-3">Minutes each</th>
+                <th className="text-right px-3 py-3">Time / shift</th>
+                <th className="text-right px-3 py-3">Addressable %</th>
+                <th className="px-4 py-3">Addressable time</th>
               </tr>
             </thead>
             <tbody>
@@ -555,15 +586,13 @@ function OpsView({ state, updOps }) {
                     <td className="px-3 py-3 align-middle">
                       <EngineBadge engine={r.engine} />
                     </td>
-                    <td className="px-3 py-3 text-center tabular-nums text-base text-muted-foreground">{r.defaultFreq}</td>
-                    <td className="px-3 py-3 text-center tabular-nums text-base text-muted-foreground">{r.defaultMins}</td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-2 text-center">
                       <CellInput value={r.idxFreq} onChange={(v) => updateRow(i, "idxFreq", v)} wider />
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-2 text-center">
                       <CellInput value={r.idxMins} onChange={(v) => updateRow(i, "idxMins", v)} wider />
                     </td>
-                    <td className="px-3 py-3 text-right tabular-nums font-semibold text-base text-foreground">{r.timeLost.toFixed(1)}</td>
+                    <td className="px-3 py-3 text-right tabular-nums font-semibold text-base text-foreground">{r.timeLost.toFixed(1)} min</td>
                     <td className="px-3 py-2 text-right">
                       <CellInput value={r.addressablePct} onChange={(v) => updateRow(i, "addressablePct", v)} />
                     </td>
@@ -572,7 +601,7 @@ function OpsView({ state, updOps }) {
                         <div className="flex-1 bg-aneko-deep/60 rounded-full h-1.5 overflow-hidden">
                           <div className="bg-primary h-full rounded-full" style={{ width: `${pctOfMax}%` }} />
                         </div>
-                        <div className="w-12 text-right tabular-nums font-semibold text-foreground text-base">{r.addr.toFixed(1)}</div>
+                        <div className="w-16 text-right tabular-nums font-semibold text-foreground text-base">{r.addr.toFixed(1)} min</div>
                       </div>
                     </td>
                   </tr>
@@ -582,10 +611,9 @@ function OpsView({ state, updOps }) {
                 <td></td>
                 <td className="px-4 py-3.5 text-muted-foreground uppercase tracking-wide text-xs" colSpan={2}>Total</td>
                 <td></td><td></td>
-                <td></td><td></td>
-                <td className="px-3 py-3.5 text-right tabular-nums text-foreground">{totals.tot.toFixed(1)}</td>
+                <td className="px-3 py-3.5 text-right tabular-nums text-foreground">{totals.tot.toFixed(1)} min</td>
                 <td></td>
-                <td className="px-4 py-3.5 text-right tabular-nums text-aneko-success">{totals.addr.toFixed(1)}</td>
+                <td className="px-4 py-3.5 text-right tabular-nums text-aneko-success">{totals.addr.toFixed(1)} min</td>
               </tr>
             </tbody>
           </table>
@@ -725,7 +753,7 @@ function InputPanel({ title, children, className = "" }) {
   );
 }
 
-function SliderInput({ label, value, min, max, step, onChange, display }) {
+function SliderInput({ label, value, min, max, step, onChange, display, minL, maxL }) {
   return (
     <div>
       <div className="flex justify-between items-baseline mb-2">
@@ -741,6 +769,12 @@ function SliderInput({ label, value, min, max, step, onChange, display }) {
         onChange={(e) => onChange(parseFloat(e.target.value))}
         className="w-full accent-primary cursor-pointer"
       />
+      {(minL || maxL) && (
+        <div className="flex justify-between text-[11px] text-muted-foreground mt-0.5">
+          <span>{minL}</span>
+          <span>{maxL}</span>
+        </div>
+      )}
     </div>
   );
 }

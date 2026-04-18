@@ -40,13 +40,12 @@ function LoginForm() {
       onSubmit={onSubmit}
       className="w-full max-w-sm rounded-lg bg-aneko-deep border border-border p-6 space-y-4"
     >
-      <div className="flex items-center gap-2.5">
-        <img src="/favicon.svg" alt="Aneko" className="w-8 h-8 rounded-md" />
-        <div className="text-foreground font-black tracking-[0.2em] text-sm">ANEKO</div>
+      <div className="flex items-center">
+        <img src="/logo.svg" alt="Aneko" className="h-7" />
       </div>
 
       <div>
-        <div className="text-base font-semibold text-foreground">MI-Calc</div>
+        <div className="text-base font-semibold text-foreground">ROI Calculator</div>
         <div className="text-xs text-muted-foreground mt-0.5">Restricted access.</div>
       </div>
 
