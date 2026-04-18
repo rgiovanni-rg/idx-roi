@@ -322,9 +322,7 @@ export default function App() {
       {/* Top bar — Aneko nav style */}
       <header className="px-6 py-3 flex items-center justify-between gap-4 border-b border-border bg-aneko-deep shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-md bg-primary/15 border border-primary/30 text-primary flex items-center justify-center">
-            <span className="font-black text-sm leading-none">A</span>
-          </div>
+          <img src="/favicon.svg" alt="Aneko" className="w-7 h-7 rounded-md" />
           <div className="text-foreground font-bold tracking-[0.18em] text-sm">ANEKO</div>
         </div>
 
@@ -394,29 +392,26 @@ function BoardView({ state, updBoard }) {
     <div className="h-full flex flex-col gap-3 px-5 py-3 min-h-0 overflow-y-auto">
       {/* Summary cards — labor vs value (above inputs & scenario results) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 shrink-0">
-        <div className="rounded-md bg-aneko-elev/40 border border-primary/30 px-4 py-3 ">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-md bg-primary/15 border border-primary/30 text-primary flex items-center justify-center shrink-0">
-                <Clock className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="text-xs uppercase tracking-widest text-primary font-bold">Labor efficiency</div>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Time reclaimed and directed to labor bank vs capacity</p>
-              </div>
+        <div className="rounded-md bg-aneko-elev/40 border border-border px-4 py-3">
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="w-8 h-8 rounded-md bg-primary/15 border border-primary/30 text-primary flex items-center justify-center shrink-0">
+              <Clock className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-sm uppercase tracking-wide text-primary font-bold">Labor efficiency</div>
+              <p className="text-xs text-muted-foreground mt-0.5">Reclaimed time split across capacity and labor bank</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
             <div className="text-muted-foreground">Efficiency gain</div>
             <div className="tabular-nums font-bold text-foreground text-right">{efficiencyGain.toFixed(1)}%</div>
             <div className="text-muted-foreground">Reclaimed / shift</div>
             <div className="tabular-nums font-bold text-foreground text-right">{minReclaimed.toFixed(1)} min</div>
-            <div className="text-muted-foreground">Capacity (min / shift)</div>
+            <div className="text-muted-foreground">Capacity</div>
             <div className="tabular-nums font-bold text-foreground text-right">{capMin.toFixed(1)} min</div>
-            <div className="text-muted-foreground">Labor bank (min / shift)</div>
-            <div className="tabular-nums font-black text-base text-primary/85 text-right">{labMin.toFixed(1)} min</div>
+            <div className="text-muted-foreground">Labor bank</div>
+            <div className="tabular-nums font-bold text-primary text-right">{labMin.toFixed(1)} min</div>
           </div>
-          <p className="text-[10px] text-muted-foreground/90 mt-2">Dollar impact of the labor bank is summarized in the Annual value card beside this.</p>
         </div>
         <div className="rounded-md bg-aneko-success/10 border border-aneko-success/40 px-4 py-3 ">
           <div className="flex items-start justify-between gap-2 mb-2">
@@ -425,14 +420,14 @@ function BoardView({ state, updBoard }) {
                 <DollarSign className="w-4 h-4" />
               </div>
               <div>
-                <div className="text-xs uppercase tracking-widest text-aneko-success font-bold">Annual value & labor reclaimed</div>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Capacity revenue plus dollar-equivalent of reclaimed clinician time (not a cash reduction unless headcount changes)</p>
+                <div className="text-sm uppercase tracking-wide text-aneko-success font-bold">Annual value & labor reclaimed</div>
+                <p className="text-xs text-muted-foreground mt-0.5">Revenue plus dollar-equivalent of reclaimed clinician time (not cash unless headcount changes)</p>
               </div>
             </div>
           </div>
-          <div className="space-y-2 text-xs">
+          <div className="space-y-1.5 text-sm">
             <div className="flex justify-between items-baseline gap-3">
-              <span className="text-muted-foreground">Revenue unlocked (studies)</span>
+              <span className="text-muted-foreground">Revenue unlocked</span>
               <span className="tabular-nums font-bold text-foreground">{fmtCurrency(revenueUnlocked)}</span>
             </div>
             <div className="flex justify-between items-baseline gap-3">
@@ -441,8 +436,8 @@ function BoardView({ state, updBoard }) {
             </div>
             <div className="h-px bg-border" />
             <div className="flex justify-between items-end gap-3 pt-0.5">
-              <span className="text-[10px] uppercase tracking-wider text-aneko-success/90 font-bold">Total annual value</span>
-              <span className="tabular-nums font-black text-2xl text-aneko-success leading-none">{fmtCurrency(totalValue)}</span>
+              <span className="text-xs uppercase tracking-wide text-aneko-success font-bold">Total annual value</span>
+              <span className="tabular-nums font-black text-3xl text-aneko-success leading-none">{fmtCurrency(totalValue)}</span>
             </div>
           </div>
         </div>
@@ -463,7 +458,7 @@ function BoardView({ state, updBoard }) {
             <SliderInput label="Efficiency gain" value={efficiencyGain} min={0.5} max={10} step={0.1}
               onChange={(v) => updBoard("efficiencyGain", v)}
               display={`${efficiencyGain.toFixed(1)}%`} />
-            <div className="mt-2 rounded bg-aneko-deep border border-border px-2.5 py-1.5 flex justify-between text-xs">
+            <div className="mt-2 rounded bg-aneko-deep border border-border px-3 py-2 flex justify-between text-sm">
               <span className="text-muted-foreground">Reclaimed</span>
               <span className="tabular-nums font-bold text-foreground">{minReclaimed.toFixed(1)} min / shift</span>
             </div>
@@ -473,12 +468,12 @@ function BoardView({ state, updBoard }) {
             <SliderInput label="Reinvest to capacity" value={reinvestPct} min={0} max={100} step={5}
               onChange={(v) => updBoard("reinvestPct", v)}
               display={`${reinvestPct}%`} />
-            <div className="mt-2 space-y-1">
-              <div className="rounded bg-aneko-deep border border-border px-2.5 py-1.5 flex justify-between items-baseline text-xs">
+            <div className="mt-2 space-y-1.5">
+              <div className="rounded bg-aneko-deep border border-border px-3 py-2 flex justify-between items-baseline text-sm">
                 <span className="text-muted-foreground">Capacity <span className="tabular-nums text-foreground/90">{capMin.toFixed(1)}m</span></span>
                 <span className="tabular-nums font-bold text-foreground">+{fmt(addStudiesYr)} studies/yr</span>
               </div>
-              <div className="rounded bg-aneko-deep border border-border px-2.5 py-1.5 flex justify-between items-baseline text-xs">
+              <div className="rounded bg-aneko-deep border border-border px-3 py-2 flex justify-between items-baseline text-sm">
                 <span className="text-muted-foreground">Labor <span className="tabular-nums text-foreground/90">{labMin.toFixed(1)}m</span></span>
                 <span className="tabular-nums font-bold text-foreground">{fmtCurrency(laborSaved)}/yr</span>
               </div>
@@ -488,49 +483,49 @@ function BoardView({ state, updBoard }) {
           <div className="h-px bg-border my-1" />
 
           <div>
-            <label className="block text-xs font-semibold text-foreground/90 mb-1.5">Engagement cost</label>
+            <label className="block text-sm font-semibold text-foreground mb-1.5">Engagement cost</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base">$</span>
               <input type="number" value={engagementCost} onChange={(e) => updBoard("engagementCost", parseFloat(e.target.value) || 0)}
-                className="w-full bg-background border border-input rounded-md pl-7 pr-3 py-2 text-right tabular-nums text-sm text-foreground focus:border-primary focus:outline-none"
+                className="w-full bg-aneko-deep border border-border rounded pl-7 pr-3 py-2 text-right tabular-nums text-base font-bold text-foreground hover:border-primary/50 focus:border-primary focus:outline-none transition"
                 placeholder="0" />
             </div>
-            <div className="mt-2.5 flex items-center justify-between px-3 py-2 rounded-md bg-background border border-border">
-              <div className="text-xs font-semibold text-foreground/85">Breakeven</div>
-              <div className="text-base font-bold tabular-nums text-foreground">{breakevenMo !== null ? `${breakevenMo.toFixed(1)} mo` : "—"}</div>
+            <div className="mt-2 flex items-center justify-between px-3 py-2 rounded bg-aneko-deep border border-border">
+              <div className="text-sm font-semibold text-foreground">Breakeven</div>
+              <div className="text-lg font-bold tabular-nums text-foreground">{breakevenMo !== null ? `${breakevenMo.toFixed(1)} mo` : "—"}</div>
             </div>
           </div>
         </InputPanel>
 
         {/* Study mix */}
         <InputPanel title="Study mix" className="col-span-6">
-          <table className="w-full text-xs">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="text-xs uppercase tracking-wide text-foreground/85 border-b-2 border-border">
-                <th className="text-left py-2 font-bold">Modality</th>
-                <th className="text-right py-2 font-bold">Mix %</th>
-                <th className="text-right py-2 font-bold">Rev $</th>
-                <th className="text-right py-2 font-bold">Min</th>
+              <tr className="text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
+                <th className="text-left py-1.5 font-bold">Modality</th>
+                <th className="text-right py-1.5 font-bold">Mix %</th>
+                <th className="text-right py-1.5 font-bold">Rev $</th>
+                <th className="text-right py-1.5 font-bold">Min</th>
               </tr>
             </thead>
             <tbody>
               {modalities.map((m, i) => (
                 <tr key={i} className="border-b border-border">
-                  <td className="py-1.5 text-foreground font-medium pr-1">{m.name}</td>
+                  <td className="py-1 text-foreground font-medium pr-1">{m.name}</td>
                   <td className="text-right py-1"><CellInput value={m.mixPct} onChange={(v) => updateModality(i, "mixPct", v)} /></td>
                   <td className="text-right py-1"><CellInput value={m.revenuePerStudy} onChange={(v) => updateModality(i, "revenuePerStudy", v)} wider /></td>
                   <td className="text-right py-1"><CellInput value={m.readMinutes} onChange={(v) => updateModality(i, "readMinutes", v)} /></td>
                 </tr>
               ))}
-              <tr className="font-semibold border-t-2 border-input bg-aneko-deep">
-                <td className="py-2 text-foreground/85">Weighted avg</td>
+              <tr className="font-semibold border-t-2 border-border bg-aneko-deep">
+                <td className="py-2 text-foreground">Weighted avg</td>
                 <td className="text-right tabular-nums text-foreground py-2">{totalMix}%</td>
                 <td className="text-right tabular-nums text-foreground py-2">{fmtCurrency(wRev)}</td>
                 <td className="text-right tabular-nums text-foreground py-2">{wTime.toFixed(1)}</td>
               </tr>
             </tbody>
           </table>
-          {totalMix !== 100 && <div className="text-xs text-aneko-warning mt-2 font-semibold">Mix = {totalMix}%</div>}
+          {totalMix !== 100 && <div className="text-sm text-aneko-warning mt-2 font-semibold">Mix = {totalMix}%</div>}
         </InputPanel>
       </div>
 
@@ -543,9 +538,9 @@ function BoardView({ state, updBoard }) {
           </div>
           <span className="text-xs uppercase tracking-wide text-muted-foreground font-bold">Outputs</span>
         </div>
-        <table className="w-full text-xs">
+        <table className="w-full text-sm">
           <thead>
-            <tr className="text-xs uppercase tracking-wide text-foreground/85 border-b-2 border-border">
+            <tr className="text-xs uppercase tracking-wide text-muted-foreground border-b border-border">
               <th className="text-left py-2 font-bold">Efficiency</th>
               <th className="text-right py-2 font-bold">Min/shift</th>
               <th className="text-right py-2 font-bold">Studies/yr</th>
@@ -560,13 +555,13 @@ function BoardView({ state, updBoard }) {
               const active = Math.abs(s.pct - efficiencyGain) < 0.05;
               return (
                 <tr key={s.pct} className={`border-b border-border ${active ? "bg-aneko-elev" : ""}`}>
-                  <td className={`py-1.5 ${active ? "font-bold text-primary" : "text-foreground/90"}`}>{s.pct}%</td>
-                  <td className={`text-right tabular-nums ${active ? "text-foreground" : "text-foreground/90"}`}>{s.mR.toFixed(1)}</td>
-                  <td className={`text-right tabular-nums ${active ? "text-foreground" : "text-foreground/90"}`}>{fmt(s.ast)}</td>
-                  <td className={`text-right tabular-nums ${active ? "text-foreground" : "text-foreground/90"}`}>{fmtShort(s.rev)}</td>
-                  <td className={`text-right tabular-nums ${active ? "text-foreground" : "text-foreground/90"}`}>{fmtShort(s.lab)}</td>
-                  <td className={`text-right tabular-nums font-semibold ${active ? "text-aneko-success" : "text-foreground"}`}>{fmtShort(s.total)}</td>
-                  <td className={`text-right tabular-nums ${active ? "text-foreground" : "text-foreground/90"}`}>{s.equiv.toFixed(1)}</td>
+                  <td className={`py-2 ${active ? "font-bold text-primary" : "text-foreground/90"}`}>{s.pct}%</td>
+                  <td className={`text-right tabular-nums py-2 ${active ? "text-foreground" : "text-foreground/90"}`}>{s.mR.toFixed(1)}</td>
+                  <td className={`text-right tabular-nums py-2 ${active ? "text-foreground" : "text-foreground/90"}`}>{fmt(s.ast)}</td>
+                  <td className={`text-right tabular-nums py-2 ${active ? "text-foreground" : "text-foreground/90"}`}>{fmtShort(s.rev)}</td>
+                  <td className={`text-right tabular-nums py-2 ${active ? "text-foreground" : "text-foreground/90"}`}>{fmtShort(s.lab)}</td>
+                  <td className={`text-right tabular-nums font-bold py-2 ${active ? "text-aneko-success" : "text-foreground"}`}>{fmtShort(s.total)}</td>
+                  <td className={`text-right tabular-nums py-2 ${active ? "text-foreground" : "text-foreground/90"}`}>{s.equiv.toFixed(1)}</td>
                 </tr>
               );
             })}
@@ -617,23 +612,23 @@ function OpsView({ state, updOps }) {
           <div className="text-xs text-muted-foreground">Per rad / shift · highlighted columns are editable</div>
         </div>
         <div className="flex-1 overflow-auto">
-          <table className="w-full text-xs">
+          <table className="w-full text-sm">
             <thead className="sticky top-0 bg-aneko-deep z-10">
-              <tr className="text-xs uppercase tracking-wide text-foreground/85 border-b-2 border-border">
+              <tr className="text-xs uppercase tracking-wide text-foreground/85 border-b border-border">
                 <th className="text-center px-2 py-2.5 w-10 font-bold">#</th>
                 <th className="text-left px-3 py-2.5 font-bold">Category</th>
                 <th className="text-left px-2 py-2.5 font-bold">Engine</th>
                 <th className="text-center px-2 py-2.5 border-l border-border font-bold text-muted-foreground" colSpan={2}>Public default</th>
-                <th className="text-center px-2 py-2.5 border-l-2 border-primary font-bold text-primary bg-primary/10" colSpan={2}>MI-Calc actual · editable</th>
+                <th className="text-center px-2 py-2.5 border-l border-primary/40 font-bold text-primary" colSpan={2}>MI-Calc · editable</th>
                 <th className="text-right px-2 py-2.5 border-l border-border font-bold">Lost/shift</th>
-                <th className="text-right px-2 py-2.5 font-bold text-primary bg-primary/10">Addr % · editable</th>
+                <th className="text-right px-2 py-2.5 font-bold text-primary">Addr %</th>
                 <th className="px-3 py-2.5 border-l border-border font-bold">Addressable</th>
               </tr>
-              <tr className="text-[11px] text-muted-foreground bg-aneko-deep border-b border-border font-semibold">
+              <tr className="text-xs text-muted-foreground bg-aneko-deep border-b border-border font-semibold">
                 <th></th><th></th><th></th>
                 <th className="text-center border-l border-border py-1">Freq</th><th className="text-center py-1">Min</th>
-                <th className="text-center border-l-2 border-primary bg-primary/10 py-1 text-primary">Freq</th><th className="text-center bg-primary/10 py-1 text-primary">Min</th>
-                <th className="border-l border-border"></th><th className="bg-primary/10"></th>
+                <th className="text-center border-l border-primary/40 py-1 text-primary">Freq</th><th className="text-center py-1 text-primary">Min</th>
+                <th className="border-l border-border"></th><th></th>
                 <th className="border-l border-border"></th>
               </tr>
             </thead>
@@ -643,45 +638,45 @@ function OpsView({ state, updOps }) {
                 return (
                   <tr key={r.id} className="border-b border-border hover:bg-aneko-elev/50">
                     <td className="text-center align-middle px-2">
-                      <div className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-primary/15 border border-primary/30 text-primary text-[10px] font-bold tabular-nums">{rankMap.get(r.id)}</div>
+                      <div className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-primary/15 border border-primary/30 text-primary text-sm font-bold tabular-nums">{rankMap.get(r.id)}</div>
                     </td>
-                    <td className="px-3 py-2 align-middle">
-                      <div className="font-semibold text-foreground">{r.category}</div>
+                    <td className="px-3 py-2.5 align-middle">
+                      <div className="font-semibold text-foreground text-sm">{r.category}</div>
                     </td>
-                    <td className="px-2 py-2 align-middle">
+                    <td className="px-2 py-2.5 align-middle">
                       <EngineBadge engine={r.engine} />
                     </td>
-                    <td className="px-2 py-2 text-center tabular-nums text-muted-foreground border-l border-border">{r.defaultFreq}</td>
-                    <td className="px-2 py-2 text-center tabular-nums text-muted-foreground">{r.defaultMins}</td>
-                    <td className="px-1.5 py-1 border-l-2 border-primary bg-primary/10">
+                    <td className="px-2 py-2.5 text-center tabular-nums text-muted-foreground border-l border-border">{r.defaultFreq}</td>
+                    <td className="px-2 py-2.5 text-center tabular-nums text-muted-foreground">{r.defaultMins}</td>
+                    <td className="px-2 py-1.5 border-l border-primary/40">
                       <CellInput value={r.idxFreq} step={0.1} onChange={(v) => updateRow(i, "idxFreq", v)} wider />
                     </td>
-                    <td className="px-1.5 py-1 bg-primary/10">
+                    <td className="px-2 py-1.5">
                       <CellInput value={r.idxMins} step={0.1} onChange={(v) => updateRow(i, "idxMins", v)} wider />
                     </td>
-                    <td className="px-2 py-2 text-right tabular-nums font-semibold text-foreground border-l border-border">{r.timeLost.toFixed(1)}</td>
-                    <td className="px-2 py-1 text-right bg-primary/10">
+                    <td className="px-2 py-2.5 text-right tabular-nums font-bold text-foreground border-l border-border">{r.timeLost.toFixed(1)}</td>
+                    <td className="px-2 py-1.5 text-right">
                       <CellInput value={r.addressablePct} onChange={(v) => updateRow(i, "addressablePct", v)} />
                     </td>
-                    <td className="px-3 py-2 border-l border-border">
+                    <td className="px-3 py-2.5 border-l border-border">
                       <div className="flex items-center gap-2">
                         <div className="flex-1 bg-aneko-elev rounded-sm h-2 overflow-hidden">
                           <div className="bg-primary h-full" style={{ width: `${pctOfMax}%` }} />
                         </div>
-                        <div className="w-12 text-right tabular-nums font-bold text-foreground text-xs">{r.addr.toFixed(1)}</div>
+                        <div className="w-12 text-right tabular-nums font-bold text-foreground text-sm">{r.addr.toFixed(1)}</div>
                       </div>
                     </td>
                   </tr>
                 );
               })}
-              <tr className="font-bold border-t-2 border-input bg-aneko-deep">
+              <tr className="font-bold border-t-2 border-border bg-aneko-deep text-base">
                 <td></td>
-                <td className="px-3 py-2 text-foreground" colSpan={2}>Total</td>
+                <td className="px-3 py-2.5 text-foreground" colSpan={2}>Total</td>
                 <td className="border-l border-border"></td><td></td>
-                <td className="border-l-2 border-primary bg-primary/10"></td><td className="bg-primary/10"></td>
-                <td className="px-2 py-2 text-right tabular-nums text-foreground border-l border-border">{totals.tot.toFixed(1)}</td>
-                <td className="bg-primary/10"></td>
-                <td className="px-3 py-2 text-right tabular-nums text-aneko-success border-l border-border">{totals.addr.toFixed(1)}</td>
+                <td className="border-l border-primary/40"></td><td></td>
+                <td className="px-2 py-2.5 text-right tabular-nums text-foreground border-l border-border">{totals.tot.toFixed(1)}</td>
+                <td></td>
+                <td className="px-3 py-2.5 text-right tabular-nums text-aneko-success border-l border-border">{totals.addr.toFixed(1)}</td>
               </tr>
             </tbody>
           </table>
@@ -689,10 +684,10 @@ function OpsView({ state, updOps }) {
       </div>
 
       {/* Reconciliation */}
-      <div className={`shrink-0 rounded-md border-l-4 px-3 py-2 ${toneClass} border-t border-r border-b border-border`}>
-        <div className="flex items-center gap-2">
-          <AlertCircle className={`w-4 h-4 shrink-0 ${toneText}`} />
-          <div className="flex-1 text-xs text-foreground/90">
+      <div className={`shrink-0 rounded-md border-l-4 px-4 py-2.5 ${toneClass} border-t border-r border-b border-border`}>
+        <div className="flex items-center gap-2.5">
+          <AlertCircle className={`w-5 h-5 shrink-0 ${toneText}`} />
+          <div className="flex-1 text-sm text-foreground/90">
             <span className={`font-bold ${toneText}`}>{status.label}.</span>{" "}
             Corporate target <strong className="text-foreground">{corporateTargetPct.toFixed(1)}%</strong> · Addressable interruptions <strong className="text-foreground">{totals.addrPct.toFixed(1)}%</strong> · Gap <strong className={toneText}>{gap >= 0 ? "+" : ""}{gap.toFixed(1)}%</strong>
           </div>
@@ -715,7 +710,7 @@ function EngineBadge({ engine }) {
   };
   const cls = map[engine] || "bg-slate-500/15 text-slate-300 border-slate-500/30";
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold tracking-wide ${cls}`}>
+    <span className={`inline-flex items-center px-2 py-1 rounded border text-xs font-bold tracking-wide ${cls}`}>
       {engine}
     </span>
   );
@@ -743,71 +738,65 @@ function SaveIndicator({ visible }) {
   );
 }
 
-// Input field — Aneko card style with primary tint to signal editability
+// Compact input — label + field, board-readable text sizes
 function InputCard({ label, value, onChange, prefix, step = 1 }) {
   return (
-    <div className="rounded-md bg-primary/5 border border-primary/30 p-3">
-      <label className="text-[10px] uppercase tracking-widest text-primary font-bold block mb-2">{label}</label>
+    <div>
+      <label className="text-xs uppercase tracking-wide text-muted-foreground font-bold block mb-1.5">{label}</label>
       <div className="relative">
         {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base">{prefix}</span>}
         <input type="number" step={step} value={value} onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          className={`w-full bg-aneko-deep border border-primary/40 rounded-md ${prefix ? "pl-7" : "pl-3"} pr-3 py-2 text-base font-bold tabular-nums text-foreground focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none transition`} />
+          className={`w-full bg-aneko-deep border border-border rounded ${prefix ? "pl-7" : "pl-3"} pr-3 py-2 text-lg font-bold tabular-nums text-foreground hover:border-primary/50 focus:border-primary focus:outline-none transition`} />
       </div>
     </div>
   );
 }
 
-// Output tile — Aneko stat pattern: icon-tinted square + big number + label
+// Stat tile — readable label + large value, compact padding
 function Tile({ label, value, sub, icon, valueTone }) {
   const valueClass =
     valueTone === "emerald" ? "text-aneko-success"
     : valueTone === "orange" ? "text-aneko-warning"
     : "text-foreground";
-  const iconBoxClass =
-    valueTone === "emerald" ? "bg-aneko-success/15 text-aneko-success border-aneko-success/30"
-    : valueTone === "orange" ? "bg-aneko-warning/15 text-aneko-warning border-aneko-warning/30"
-    : "bg-aneko-elev text-muted-foreground border-border";
   return (
-    <div className="rounded-md bg-aneko-elev/40 border border-border px-4 py-3 flex items-center gap-3">
-      {icon && (
-        <div className={`shrink-0 w-10 h-10 rounded-md border flex items-center justify-center ${iconBoxClass}`}>
-          {icon}
-        </div>
-      )}
-      <div className="flex-1 min-w-0">
-        <div className={`text-2xl font-black tabular-nums leading-none ${valueClass}`}>{value}</div>
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mt-1.5 leading-tight">{label}</div>
-        {sub && <div className="text-[11px] text-muted-foreground/80 mt-0.5">{sub}</div>}
+    <div className="rounded bg-aneko-elev/40 border border-border px-3 py-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground font-bold leading-tight truncate">{label}</div>
+        {icon && <div className="text-muted-foreground/70 shrink-0">{icon}</div>}
+      </div>
+      <div className="flex items-baseline justify-between gap-2 mt-1">
+        <div className={`text-2xl font-black tabular-nums leading-tight ${valueClass}`}>{value}</div>
+        {sub && <div className="text-xs text-muted-foreground tabular-nums">{sub}</div>}
       </div>
     </div>
   );
 }
 
-// Hero tile — the ONE number that matters most
+// Hero tile — same compact footprint, success accent
 function HeroTile({ label, value, sub, icon }) {
   return (
-    <div className="rounded-md bg-aneko-success/10 border border-aneko-success/40 px-4 py-3 flex items-center gap-3">
-      <div className="shrink-0 w-10 h-10 rounded-md bg-aneko-success/20 border border-aneko-success/40 text-aneko-success flex items-center justify-center">
-        {icon || <span className="text-sm font-black">★</span>}
+    <div className="rounded bg-aneko-success/10 border border-aneko-success/40 px-3 py-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs uppercase tracking-wide text-aneko-success font-bold leading-tight truncate">{label}</div>
+        {icon && <div className="text-aneko-success shrink-0">{icon}</div>}
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-2xl font-black tabular-nums leading-none text-aneko-success">{value}</div>
-        <div className="text-[10px] uppercase tracking-widest text-aneko-success font-bold mt-1.5 leading-tight">{label}</div>
-        {sub && <div className="text-[11px] text-foreground/85 mt-0.5">{sub}</div>}
+      <div className="flex items-baseline justify-between gap-2 mt-1">
+        <div className="text-2xl font-black tabular-nums leading-tight text-aneko-success">{value}</div>
+        {sub && <div className="text-xs text-aneko-success/80 tabular-nums">{sub}</div>}
       </div>
     </div>
   );
 }
 
-// Panel styles — Input vs Output clearly differentiated
+// Input panel — neutral surface, readable header
 function InputPanel({ title, children, className = "" }) {
   return (
-    <div className={`rounded-md bg-aneko-elev/40 border border-primary/25 flex flex-col overflow-hidden ${className}`}>
-      <div className="px-4 py-2.5 border-b border-primary/20 shrink-0 bg-primary/10 flex items-center justify-between">
-        <span className="text-xs uppercase tracking-widest text-primary font-bold">{title}</span>
-        <span className="text-[10px] uppercase tracking-widest text-primary/70 font-bold">Inputs</span>
+    <div className={`rounded-md bg-aneko-elev/40 border border-border flex flex-col overflow-hidden ${className}`}>
+      <div className="px-3 py-2 border-b border-border shrink-0 bg-aneko-deep flex items-center justify-between">
+        <span className="text-sm uppercase tracking-wide text-foreground font-bold">{title}</span>
+        <span className="text-xs uppercase tracking-wide text-muted-foreground font-bold">Inputs</span>
       </div>
-      <div className="p-4 space-y-4">{children}</div>
+      <div className="p-3 space-y-3">{children}</div>
     </div>
   );
 }
@@ -815,13 +804,13 @@ function InputPanel({ title, children, className = "" }) {
 function SliderInput({ label, value, min, max, step, onChange, display, minL, maxL }) {
   return (
     <div>
-      <div className="flex justify-between items-baseline mb-1">
-        <label className="text-xs font-semibold text-foreground">{label}</label>
-        <span className="text-sm tabular-nums font-bold text-primary">{display}</span>
+      <div className="flex justify-between items-baseline mb-1.5">
+        <label className="text-sm font-semibold text-foreground">{label}</label>
+        <span className="text-base tabular-nums font-bold text-primary">{display}</span>
       </div>
       <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(parseFloat(e.target.value))}
         className="w-full accent-primary" />
-      <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
+      <div className="flex justify-between text-xs text-muted-foreground mt-0.5">
         <span>{minL}</span><span>{maxL}</span>
       </div>
     </div>
@@ -831,7 +820,7 @@ function SliderInput({ label, value, min, max, step, onChange, display, minL, ma
 function CellInput({ value, onChange, step = 1, wider = false }) {
   return (
     <input type="number" step={step} value={value} onChange={(e) => onChange(e.target.value)}
-      className={`${wider ? "w-16" : "w-14"} text-right bg-aneko-deep border border-primary/40 rounded px-1.5 py-1 tabular-nums text-xs font-bold text-foreground focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none transition`} />
+      className={`${wider ? "w-20" : "w-16"} text-right bg-aneko-deep border border-border rounded px-2 py-1.5 tabular-nums text-sm font-bold text-foreground hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none transition`} />
   );
 }
 

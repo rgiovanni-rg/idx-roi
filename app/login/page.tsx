@@ -41,9 +41,7 @@ function LoginForm() {
       className="w-full max-w-sm rounded-lg bg-aneko-deep border border-border p-6 space-y-4"
     >
       <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
-          <span className="font-black text-base leading-none">A</span>
-        </div>
+        <img src="/favicon.svg" alt="Aneko" className="w-8 h-8 rounded-md" />
         <div className="text-foreground font-black tracking-[0.2em] text-sm">ANEKO</div>
       </div>
 
