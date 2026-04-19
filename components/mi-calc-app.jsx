@@ -199,7 +199,7 @@ function exportWorkbook(state) {
     ["Investment cost (AUD)", state.board.engagementCost],
     [],
     ["STUDY MIX (PER SHIFT)"],
-    ["Modality", "Study mix % (per shift)", "Revenue per study (AUD)", "Read minutes"],
+    ["Modality", "Study mix % (per shift)", "Revenue per study (AUD)", "Minutes / read"],
     ...state.board.modalities.map(m => [m.name, m.mixPct, m.revenuePerStudy, m.readMinutes]),
     ["Weighted average", c.totalMix, Number(c.wRev.toFixed(2)), Number(c.wTime.toFixed(2))],
   ];
@@ -319,7 +319,7 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
                     <span className="sm:hidden">Mix %</span>
                   </th>
                   <th className="text-right pb-2 font-semibold px-1">Rev / study</th>
-                  <th className="text-right pb-2 font-semibold pl-1">Minutes</th>
+                  <th className="text-right pb-2 font-semibold pl-1">Minutes / read</th>
                 </tr>
               </thead>
               <tbody>
