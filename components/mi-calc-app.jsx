@@ -198,8 +198,8 @@ function exportWorkbook(state) {
     ["Reinvest to capacity %", state.board.reinvestPct],
     ["Investment cost (AUD)", state.board.engagementCost],
     [],
-    ["STUDY MIX"],
-    ["Modality", "Volume mix %", "Revenue per study (AUD)", "Read minutes"],
+    ["STUDY MIX (PER SHIFT)"],
+    ["Modality", "Study mix % (per shift)", "Revenue per study (AUD)", "Read minutes"],
     ...state.board.modalities.map(m => [m.name, m.mixPct, m.revenuePerStudy, m.readMinutes]),
     ["Weighted average", c.totalMix, Number(c.wRev.toFixed(2)), Number(c.wTime.toFixed(2))],
   ];
@@ -300,14 +300,14 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
 
       {tab === "board" && (
         <>
-          {/* Study mix */}
+          {/* Study mix — volume share per typical shift */}
           <section className="rounded-lg bg-aneko-elev/60 px-5 py-4">
             <div className="flex items-baseline justify-between mb-3">
-              <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Study mix</h3>
-              <span className="text-[11px] text-muted-foreground">
-                Weighted averages used on the left
+              <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Study mix per shift</h3>
+              <span className="text-[11px] text-muted-foreground text-right max-w-[14rem] leading-snug">
+                Share of studies by modality on a typical shift (sum 100%)
                 {modalities.length > 0 && (
-                  <span className="text-muted-foreground/80"> · equal split ≈ {mixEqualShare.toFixed(1)}% each</span>
+                  <span className="text-muted-foreground/80"> · equal ≈ {mixEqualShare.toFixed(1)}% each</span>
                 )}
               </span>
             </div>
@@ -315,7 +315,10 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
               <thead>
                 <tr className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
                   <th className="text-left pb-2 font-semibold">Modality</th>
-                  <th className="text-right pb-2 font-semibold px-1">Mix %</th>
+                  <th className="text-right pb-2 font-semibold px-1">
+                    <span className="hidden sm:inline">Mix % / shift</span>
+                    <span className="sm:hidden">Mix %</span>
+                  </th>
                   <th className="text-right pb-2 font-semibold px-1">Rev / study</th>
                   <th className="text-right pb-2 font-semibold pl-1">Minutes</th>
                 </tr>
@@ -341,8 +344,8 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
                         title={
                           mixHighlight && totalMix !== 100
                             ? totalMix > 100
-                              ? "Above equal share — reduce this mix % to help reach 100%"
-                              : "Below equal share — increase this mix % to help reach 100%"
+                              ? "Above equal share per shift — reduce this % to help reach 100%"
+                              : "Below equal share per shift — increase this % to help reach 100%"
                             : undefined
                         }
                       />
