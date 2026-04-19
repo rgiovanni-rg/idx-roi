@@ -324,7 +324,10 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
               </thead>
               <tbody>
                 {modalities.map((m, i) => {
-                  const isEmpty = m.mixPct === 0;
+                  // Misc/Other is allowed to be 0 — every other modality with no volume
+                  // clearly hasn't been filled in yet.
+                  const isMisc = /\b(misc|other)\b/i.test(m.name || "");
+                  const isEmpty = m.mixPct === 0 && !isMisc;
                   return (
                     <tr
                       key={i}
