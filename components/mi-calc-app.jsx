@@ -282,7 +282,6 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Assumptions</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Inputs driving every number on the left.</p>
         </div>
       </div>
 
@@ -666,7 +665,6 @@ function BoardView({ state, updBoard }) {
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 pb-2">
             <div>
               <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Efficiency sensitivity</h3>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Other efficiency gains you could assume. The highlighted row matches the slider.</p>
             </div>
           </div>
           <div className="w-full">
