@@ -199,21 +199,12 @@ function exportWorkbook(state) {
     ["Investment cost (AUD)", state.board.engagementCost],
     [],
     ["STUDY MIX (PER SHIFT)"],
-    ["Modality", "Study mix % (per shift)", "Gap Δ (pp)", "Revenue per study (AUD)", "Read minutes"],
-    ...state.board.modalities.map((m) => {
-      const delta = c.totalMix > 0 ? m.mixPct * ((c.totalMix - 100) / c.totalMix) : 0;
-      return [m.name, m.mixPct, Number(delta.toFixed(2)), m.revenuePerStudy, m.readMinutes];
-    }),
-    [
-      "Weighted average",
-      c.totalMix,
-      Number((c.totalMix - 100).toFixed(2)),
-      Number(c.wRev.toFixed(2)),
-      Number(c.wTime.toFixed(2)),
-    ],
+    ["Modality", "Study mix % (per shift)", "Revenue per study (AUD)", "Read minutes"],
+    ...state.board.modalities.map(m => [m.name, m.mixPct, m.revenuePerStudy, m.readMinutes]),
+    ["Weighted average", c.totalMix, Number(c.wRev.toFixed(2)), Number(c.wTime.toFixed(2))],
   ];
   const assumptionsSheet = XLSX.utils.aoa_to_sheet(assumptions);
-  assumptionsSheet["!cols"] = [{ wch: 36 }, { wch: 18 }, { wch: 14 }, { wch: 22 }, { wch: 14 }];
+  assumptionsSheet["!cols"] = [{ wch: 36 }, { wch: 18 }, { wch: 22 }, { wch: 14 }];
   XLSX.utils.book_append_sheet(wb, assumptionsSheet, "Assumptions");
 
   // Sheet 2: Corporate ROI
@@ -270,31 +261,14 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
   const c = useMemo(() => computeCorporate(state), [state]);
   const { wRev, wTime, totalMix, breakevenMo, investmentRoiMultiple } = c;
 
-  /**
-   * Proportional gap accounting: if mix values were scaled so the sum becomes 100%,
-   * each row changes by `mixPct * (totalMix - 100) / totalMix` percentage points.
-   * These Δ_i sum exactly to `gap = totalMix - 100`, giving one coherent story for
-   * who contributes to an over/under total (vs. the arbitrary "equal split" heuristic).
-   */
-  const mixGap = useMemo(() => {
-    const gap = totalMix - 100;
-    if (totalMix <= 0 || modalities.length === 0) {
-      return { gap, deltas: modalities.map(() => 0), topIdx: new Set() };
-    }
-    const factor = gap / totalMix;
-    const deltas = modalities.map((m) => m.mixPct * factor);
-    // Highlight only the 1-2 largest absolute contributors when totalMix !== 100
-    const topIdx = new Set();
-    if (Math.abs(gap) > 0.01) {
-      const ranked = deltas
-        .map((d, i) => ({ i, abs: Math.abs(d) }))
-        .filter((r) => r.abs > 0.05)
-        .sort((a, b) => b.abs - a.abs)
-        .slice(0, 2);
-      for (const r of ranked) topIdx.add(r.i);
-    }
-    return { gap, deltas, topIdx };
-  }, [modalities, totalMix]);
+  const mixGap = totalMix - 100;
+  const mixStatus = mixGap === 0 ? "balanced" : mixGap > 0 ? "over" : "under";
+  const mixTotalTone =
+    mixStatus === "balanced"
+      ? "text-aneko-success"
+      : mixStatus === "over"
+        ? "text-aneko-warning"
+        : "text-primary";
 
   const updateModality = (idx, field, value) => {
     const next = [...modalities];
@@ -330,19 +304,11 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
         <>
           {/* Study mix — volume share per typical shift */}
           <section className="rounded-lg bg-aneko-elev/60 px-5 py-4">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-3">
+            <div className="flex items-baseline justify-between mb-3">
               <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Study mix per shift</h3>
-              <div className="text-[11px] text-muted-foreground text-right max-w-[16rem] leading-snug">
-                <div>Share of studies by modality on a typical shift (sum 100%)</div>
-                {totalMix !== 100 && (
-                  <div className="mt-0.5">
-                    <span className={mixGap.gap > 0 ? "text-aneko-warning font-semibold" : "text-primary font-semibold"}>
-                      {mixGap.gap > 0 ? "Over 100%" : "Under 100%"} by {Math.abs(mixGap.gap).toFixed(1)} pp
-                    </span>
-                    <span className="text-muted-foreground/80"> · largest contributors highlighted</span>
-                  </div>
-                )}
-              </div>
+              <span className="text-[11px] text-muted-foreground text-right max-w-[14rem] leading-snug">
+                Share of studies by modality on a typical shift (sum 100%)
+              </span>
             </div>
             <table className="w-full text-sm">
               <thead>
@@ -352,103 +318,54 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
                     <span className="hidden sm:inline">Mix % / shift</span>
                     <span className="sm:hidden">Mix %</span>
                   </th>
-                  <th
-                    className="text-right pb-2 font-semibold px-1"
-                    title="Proportional share of the current over/under (in percentage points). Σ equals the total gap."
-                  >
-                    <span className="hidden sm:inline">Gap Δ (pp)</span>
-                    <span className="sm:hidden">Δ pp</span>
-                  </th>
                   <th className="text-right pb-2 font-semibold px-1">Rev / study</th>
                   <th className="text-right pb-2 font-semibold pl-1">Minutes</th>
                 </tr>
               </thead>
               <tbody>
                 {modalities.map((m, i) => {
-                  const delta = mixGap.deltas[i] ?? 0;
-                  const isTop = mixGap.topIdx.has(i);
-                  const deltaTone =
-                    totalMix === 100 || Math.abs(delta) < 0.05
-                      ? "text-muted-foreground/70"
-                      : mixGap.gap > 0
-                        ? "text-aneko-warning"
-                        : "text-primary";
+                  const isEmpty = m.mixPct === 0;
                   return (
                     <tr
                       key={i}
-                      className={`border-t border-border/40 ${
-                        isTop
-                          ? mixGap.gap > 0
-                            ? "bg-aneko-warning/[0.07]"
-                            : "bg-primary/[0.07]"
-                          : ""
-                      }`}
+                      className={`border-t border-border/40 ${isEmpty ? "bg-aneko-warning/[0.08]" : ""}`}
                     >
-                      <td className={`py-2 font-medium pr-1 ${isTop ? (mixGap.gap > 0 ? "text-aneko-warning" : "text-primary") : "text-foreground"}`}>{m.name}</td>
+                      <td className={`py-2 font-medium pr-1 ${isEmpty ? "text-aneko-warning" : "text-foreground"}`}>
+                        {m.name}
+                      </td>
                       <td className="text-right py-2 px-1">
                         <CellInput
                           value={m.mixPct}
                           onChange={(v) => updateModality(i, "mixPct", v)}
                           className={
-                            isTop
-                              ? mixGap.gap > 0
-                                ? "border-aneko-warning bg-aneko-warning/15 text-aneko-warning ring-1 ring-aneko-warning/35"
-                                : "border-primary/60 bg-primary/10 text-primary ring-1 ring-primary/30"
+                            isEmpty
+                              ? "border-aneko-warning bg-aneko-warning/15 text-aneko-warning ring-1 ring-aneko-warning/35"
                               : ""
                           }
-                          title={
-                            isTop
-                              ? mixGap.gap > 0
-                                ? `Largest contributor: ~${Math.abs(delta).toFixed(1)} pp of the ${mixGap.gap.toFixed(1)} pp overage`
-                                : `Largest contributor: ~${Math.abs(delta).toFixed(1)} pp of the ${Math.abs(mixGap.gap).toFixed(1)} pp shortfall`
-                              : undefined
-                          }
+                          title={isEmpty ? "Not filled in — set a share or remove this modality" : undefined}
                         />
-                      </td>
-                      <td className={`text-right tabular-nums py-2 px-1 text-sm font-semibold ${deltaTone}`}>
-                        {totalMix === 100 || Math.abs(delta) < 0.05
-                          ? "—"
-                          : `${delta > 0 ? "+" : "−"}${Math.abs(delta).toFixed(1)}`}
                       </td>
                       <td className="text-right py-2 px-1"><CellInput value={m.revenuePerStudy} onChange={(v) => updateModality(i, "revenuePerStudy", v)} wider /></td>
                       <td className="text-right py-2 pl-1"><CellInput value={m.readMinutes} onChange={(v) => updateModality(i, "readMinutes", v)} /></td>
                     </tr>
                   );
                 })}
-                {totalMix !== 100 && (
-                  <tr
-                    className={`border-t border-border/40 ${
-                      mixGap.gap > 0 ? "bg-aneko-warning/10" : "bg-primary/10"
-                    }`}
-                  >
-                    <td
-                      className={`py-2 pr-1 text-[11px] font-semibold uppercase tracking-widest ${
-                        mixGap.gap > 0 ? "text-aneko-warning" : "text-primary"
-                      }`}
-                    >
-                      {mixGap.gap > 0 ? "Over 100%" : "Under 100%"}
-                    </td>
-                    <td
-                      className={`text-right py-2 px-1 font-semibold tabular-nums text-sm ${
-                        mixGap.gap > 0 ? "text-aneko-warning" : "text-primary"
-                      }`}
-                    >
-                      {mixGap.gap > 0 ? `−${mixGap.gap.toFixed(1)}` : `+${Math.abs(mixGap.gap).toFixed(1)}`} pp
-                    </td>
-                    <td
-                      className={`text-right py-2 px-1 font-semibold tabular-nums text-sm ${
-                        mixGap.gap > 0 ? "text-aneko-warning" : "text-primary"
-                      }`}
-                    >
-                      {mixGap.gap > 0 ? "−" : "+"}{Math.abs(mixGap.gap).toFixed(1)}
-                    </td>
-                    <td colSpan={2}></td>
-                  </tr>
-                )}
-                <tr className="border-t-2 border-border/70 bg-aneko-elev/40">
-                  <th scope="row" className="py-2.5 text-left text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Weighted avg</th>
-                  <td className={`text-right tabular-nums py-2.5 px-1 font-semibold text-sm ${totalMix === 100 ? "text-foreground" : mixGap.gap > 0 ? "text-aneko-warning" : "text-primary"}`}>{totalMix}%</td>
-                  <td className="py-2.5 px-1"></td>
+                <tr className="border-t-2 border-border/70 bg-aneko-elev/40 align-top">
+                  <th scope="row" className="py-2.5 text-left text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                    Weighted avg
+                  </th>
+                  <td className="py-2.5 px-1 text-right">
+                    <div className={`tabular-nums font-bold text-base leading-tight ${mixTotalTone}`}>
+                      {totalMix}%
+                    </div>
+                    <div className={`text-[11px] font-semibold leading-tight mt-0.5 ${mixTotalTone}`}>
+                      {mixStatus === "balanced"
+                        ? "Balanced"
+                        : mixStatus === "over"
+                          ? `Over by ${mixGap}% — reduce to 100%`
+                          : `Under by ${Math.abs(mixGap)}% — add to reach 100%`}
+                    </div>
+                  </td>
                   <td className="text-right tabular-nums py-2.5 px-1 font-semibold text-sm text-foreground">{fmtCurrency(wRev)}</td>
                   <td className="text-right tabular-nums py-2.5 pl-1 font-semibold text-sm text-foreground">{wTime.toFixed(1)}</td>
                 </tr>
