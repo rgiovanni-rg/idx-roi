@@ -261,6 +261,13 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
   const c = useMemo(() => computeCorporate(state), [state]);
   const { wRev, wTime, totalMix, breakevenMo, investmentRoiMultiple } = c;
 
+  const mixEqualShare = modalities.length > 0 ? 100 / modalities.length : 0;
+  const mixPctNeedsAttention = (pct) => {
+    if (totalMix === 100) return false;
+    if (totalMix > 100) return pct > mixEqualShare;
+    return pct < mixEqualShare;
+  };
+
   const updateModality = (idx, field, value) => {
     const next = [...modalities];
     next[idx] = { ...next[idx], [field]: parseFloat(value) || 0 };
@@ -297,7 +304,12 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
           <section className="rounded-lg bg-aneko-elev/60 px-5 py-4">
             <div className="flex items-baseline justify-between mb-3">
               <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Study mix</h3>
-              <span className="text-[11px] text-muted-foreground">Weighted averages used on the left</span>
+              <span className="text-[11px] text-muted-foreground">
+                Weighted averages used on the left
+                {modalities.length > 0 && (
+                  <span className="text-muted-foreground/80"> · equal split ≈ {mixEqualShare.toFixed(1)}% each</span>
+                )}
+              </span>
             </div>
             <table className="w-full text-sm">
               <thead>
@@ -309,14 +321,37 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
                 </tr>
               </thead>
               <tbody>
-                {modalities.map((m, i) => (
-                  <tr key={i} className="border-t border-border/40">
-                    <td className="py-2 text-foreground font-medium pr-1">{m.name}</td>
-                    <td className="text-right py-2 px-1"><CellInput value={m.mixPct} onChange={(v) => updateModality(i, "mixPct", v)} /></td>
+                {modalities.map((m, i) => {
+                  const mixHighlight = mixPctNeedsAttention(m.mixPct);
+                  return (
+                  <tr
+                    key={i}
+                    className={`border-t border-border/40 ${mixHighlight && totalMix !== 100 ? "bg-aneko-warning/[0.07]" : ""}`}
+                  >
+                    <td className={`py-2 font-medium pr-1 ${mixHighlight && totalMix !== 100 ? "text-aneko-warning" : "text-foreground"}`}>{m.name}</td>
+                    <td className="text-right py-2 px-1">
+                      <CellInput
+                        value={m.mixPct}
+                        onChange={(v) => updateModality(i, "mixPct", v)}
+                        className={
+                          mixHighlight && totalMix !== 100
+                            ? "border-aneko-warning bg-aneko-warning/15 text-aneko-warning ring-1 ring-aneko-warning/35"
+                            : ""
+                        }
+                        title={
+                          mixHighlight && totalMix !== 100
+                            ? totalMix > 100
+                              ? "Above equal share — reduce this mix % to help reach 100%"
+                              : "Below equal share — increase this mix % to help reach 100%"
+                            : undefined
+                        }
+                      />
+                    </td>
                     <td className="text-right py-2 px-1"><CellInput value={m.revenuePerStudy} onChange={(v) => updateModality(i, "revenuePerStudy", v)} wider /></td>
                     <td className="text-right py-2 pl-1"><CellInput value={m.readMinutes} onChange={(v) => updateModality(i, "readMinutes", v)} /></td>
                   </tr>
-                ))}
+                  );
+                })}
                 {totalMix !== 100 && (
                   <tr className="border-t border-border/40 bg-aneko-warning/10">
                     <td className="py-2 pr-1 text-aneko-warning text-[11px] font-semibold uppercase tracking-widest">
@@ -959,7 +994,7 @@ function SliderInput({ label, value, min, max, step, onChange, display, minL, ma
   );
 }
 
-function CellInput({ value, onChange, wider = false }) {
+function CellInput({ value, onChange, wider = false, className = "", title: inputTitle }) {
   const [draft, setDraft] = useState(String(value));
   const [focused, setFocused] = useState(false);
   useEffect(() => { if (!focused) setDraft(String(value)); }, [value, focused]);
@@ -967,6 +1002,7 @@ function CellInput({ value, onChange, wider = false }) {
     <input
       type="text"
       inputMode="decimal"
+      title={inputTitle}
       value={draft}
       onChange={(e) => {
         const v = e.target.value;
@@ -980,7 +1016,7 @@ function CellInput({ value, onChange, wider = false }) {
       }}
       onFocus={(e) => { setFocused(true); e.target.select(); }}
       onBlur={() => { setFocused(false); }}
-      className={`${wider ? "w-24" : "w-20"} text-right bg-aneko-deep border border-border rounded px-2.5 py-2 tabular-nums text-base font-bold text-foreground hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none transition`}
+      className={`${wider ? "w-24" : "w-20"} text-right bg-aneko-deep border border-border rounded px-2.5 py-2 tabular-nums text-base font-bold text-foreground hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none transition ${className}`}
     />
   );
 }
