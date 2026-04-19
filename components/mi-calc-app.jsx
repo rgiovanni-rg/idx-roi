@@ -560,7 +560,6 @@ function BoardView({ state, updBoard }) {
         <div className="shrink-0 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Annual financial impact</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">What Aneko-driven efficiency is worth this year.</p>
           </div>
           <div className="inline-flex items-center gap-2 text-[11px] text-muted-foreground rounded-full border border-border/60 bg-aneko-elev/40 px-3 py-1 tabular-nums">
             <span>@ {efficiencyGain.toFixed(1)}% efficiency gain</span>
@@ -576,7 +575,7 @@ function BoardView({ state, updBoard }) {
           </div>
           <div className={`tabular-nums font-bold text-5xl leading-none mt-2 transition-colors duration-500 ${flashTotal ? "text-primary" : "text-aneko-success"}`}>{fmtCurrency(totalValue)}</div>
           <p className="text-xs text-muted-foreground mt-2 max-w-2xl">
-            Revenue from the extra studies your team can read, plus the dollar value of realized efficiency. Assumptions drive every number — edit them in the right column.
+            Revenue from the extra studies your team can read, plus the dollar value of realized efficiency.
           </p>
         </section>
 
@@ -584,7 +583,6 @@ function BoardView({ state, updBoard }) {
         <section className="shrink-0 rounded-lg bg-aneko-elev/60 px-5 py-4 ring-1 ring-primary/15">
           <div className="flex items-baseline justify-between mb-3">
             <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Key metrics</h3>
-            <span className="text-[11px] text-muted-foreground">Operational · network-wide where noted</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div>
@@ -638,7 +636,6 @@ function BoardView({ state, updBoard }) {
         <section className="shrink-0 rounded-lg bg-aneko-elev/60 px-5 py-4">
           <div className="flex items-baseline justify-between mb-3">
             <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Scenario drivers</h3>
-            <span className="text-[11px] text-muted-foreground">Move the sliders to model a scenario</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
             <div className="min-w-0">
