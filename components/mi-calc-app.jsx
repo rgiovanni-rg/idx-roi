@@ -15,14 +15,16 @@ const STORAGE_KEY = "mi-calc-v1";
 const APP_VERSION = "1.0.0";
 
 const DEFAULT_MODALITIES = [
-  { name: "X-ray",        mixPct: 45, revenuePerStudy: 55,  readMinutes: 3 },
-  { name: "Ultrasound",   mixPct: 20, revenuePerStudy: 180, readMinutes: 10 },
-  { name: "CT",           mixPct: 20, revenuePerStudy: 350, readMinutes: 12 },
-  { name: "MRI",          mixPct: 8,  revenuePerStudy: 450, readMinutes: 18 },
-  { name: "Mammography",  mixPct: 4,  revenuePerStudy: 120, readMinutes: 5 },
-  { name: "Nuclear Med",  mixPct: 2,  revenuePerStudy: 600, readMinutes: 15 },
-  { name: "Fluoroscopy",  mixPct: 1,  revenuePerStudy: 280, readMinutes: 8 },
-  { name: "Other / misc", mixPct: 0,  revenuePerStudy: 200, readMinutes: 8 },
+  { name: "Bone Densitometry (DEXA)", mixPct: 2,  revenuePerStudy: 85,  readMinutes: 4 },
+  { name: "X-ray (General)",          mixPct: 28, revenuePerStudy: 55,  readMinutes: 3 },
+  { name: "Dental (OPG / CBCT)",      mixPct: 3,  revenuePerStudy: 120, readMinutes: 8 },
+  { name: "Mammography",              mixPct: 8,  revenuePerStudy: 120, readMinutes: 5 },
+  { name: "Ultrasound",               mixPct: 20, revenuePerStudy: 180, readMinutes: 10 },
+  { name: "Echocardiography",         mixPct: 5,  revenuePerStudy: 220, readMinutes: 15 },
+  { name: "Nuclear Med (Non-PET)",      mixPct: 3,  revenuePerStudy: 600, readMinutes: 15 },
+  { name: "CT",                       mixPct: 18, revenuePerStudy: 350, readMinutes: 12 },
+  { name: "MRI",                      mixPct: 10, revenuePerStudy: 450, readMinutes: 18 },
+  { name: "PET / PET-CT",             mixPct: 3,  revenuePerStudy: 850, readMinutes: 20 },
 ];
 
 const DEFAULT_INTERRUPTIONS = [
