@@ -33,6 +33,18 @@ async function signSession(secret: string): Promise<string> {
   return `${payload}.${bytesToB64url(sig)}`;
 }
 
+/** IP-derived location from Vercel edge (only on deployed Vercel; empty locally). */
+function clientGeo(req: NextRequest): {
+  country?: string;
+  region?: string;
+  city?: string;
+} {
+  const country = req.headers.get("x-vercel-ip-country")?.trim() || undefined;
+  const region = req.headers.get("x-vercel-ip-country-region")?.trim() || undefined;
+  const city = req.headers.get("x-vercel-ip-city")?.trim() || undefined;
+  return { country, region, city };
+}
+
 // Constant-time-ish string compare
 function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -58,6 +70,17 @@ export async function POST(req: NextRequest) {
   if (!password || !safeEqual(password, expected)) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
+
+  // Searchable in hosting logs (e.g. Vercel → Logs) — confirms password was correct.
+  // `country` / `region` / `city` come from Vercel geo headers (IP-based, not exact GPS).
+  const { country, region, city } = clientGeo(req);
+  const logPayload: Record<string, string> = {
+    at: new Date().toISOString(),
+  };
+  if (country) logPayload.country = country;
+  if (region) logPayload.region = region;
+  if (city) logPayload.city = city;
+  console.info("[roi-calc-auth-success]", JSON.stringify(logPayload));
 
   const token = await signSession(secret);
   const res = NextResponse.json({ ok: true });
