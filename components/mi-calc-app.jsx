@@ -312,8 +312,8 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
       {/* Shared inputs — card section matching left */}
       <section className="rounded-lg bg-aneko-elev/60 px-5 py-4">
         <div className="flex items-baseline justify-between mb-3">
-          <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Shared inputs</h3>
-          <span className="text-[11px] text-muted-foreground">Network baseline</span>
+          <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Shared inputs</h3>
+          <span className="text-xs text-muted-foreground">Network baseline</span>
         </div>
         <div className="grid grid-cols-4 gap-x-3">
           <RailInput label="Radiologists" value={state.shared.radiologists} onChange={(v) => updShared("radiologists", v)} />
@@ -328,14 +328,14 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
           {/* Study mix — volume share per typical shift */}
           <section className="rounded-lg bg-aneko-elev/60 px-5 py-4">
             <div className="flex items-baseline justify-between mb-3">
-              <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Study mix per shift</h3>
-              <span className="text-[11px] text-muted-foreground text-right max-w-[14rem] leading-snug">
+              <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Study mix per shift</h3>
+              <span className="text-[13px] text-muted-foreground text-right max-w-[14rem] leading-snug">
                 Share of studies by modality on a typical shift (sum 100%)
               </span>
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                <tr className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
                   <th className="text-left pb-2 font-semibold">Modality</th>
                   <th className="text-right pb-2 font-semibold px-1">
                     <span className="hidden sm:inline">Mix % / shift</span>
@@ -377,14 +377,14 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
                   );
                 })}
                 <tr className="border-t-2 border-border/70 bg-aneko-elev/40 align-top">
-                  <th scope="row" className="py-2.5 text-left text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                  <th scope="row" className="py-2.5 text-left text-xs uppercase tracking-widest text-muted-foreground font-semibold">
                     Weighted avg
                   </th>
                   <td className="py-2.5 px-1 text-right">
                     <div className={`tabular-nums font-bold text-base leading-tight ${mixTotalTone}`}>
                       {totalMix}%
                     </div>
-                    <div className={`text-[11px] font-semibold leading-tight mt-0.5 ${mixTotalTone}`}>
+                    <div className={`text-[13px] font-semibold leading-tight mt-1 ${mixTotalTone}`}>
                       {mixStatus === "balanced"
                         ? "Balanced"
                         : mixStatus === "over"
@@ -396,9 +396,9 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
                   <td className="text-right tabular-nums py-2.5 pl-1 font-semibold text-sm text-foreground">{wTime.toFixed(1)}</td>
                 </tr>
                 <tr className="border-t border-border/40 bg-aneko-elev/30">
-                  <th scope="row" colSpan={3} className="py-2 text-left text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                  <th scope="row" colSpan={3} className="py-2 text-left text-xs uppercase tracking-widest text-muted-foreground font-semibold">
                     Reading capacity / shift
-                    <span className="block text-[11px] normal-case tracking-normal font-normal text-muted-foreground/80 mt-0.5">
+                    <span className="block text-[13px] normal-case tracking-normal font-normal text-muted-foreground mt-1 leading-snug">
                       Theoretical max at the modeled read-mix. Your rads' actual baseline will be lower — that gap is what Aneko closes.
                     </span>
                   </th>
@@ -411,12 +411,12 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
           {/* Investment */}
           <section className="rounded-lg bg-aneko-elev/60 px-5 py-4">
             <div className="flex items-baseline justify-between mb-3">
-              <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Investment</h3>
-              <span className="text-[11px] text-muted-foreground">Year 1 vs. total annual value</span>
+              <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Investment</h3>
+              <span className="text-xs text-muted-foreground">Year 1 vs. total annual value</span>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Investment cost</label>
+                <label className="block text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Investment cost</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                   <input
@@ -435,13 +435,13 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
               </div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                 <div>
-                  <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Investment ROI</div>
+                  <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Investment ROI</div>
                   <div className="tabular-nums font-semibold text-2xl leading-none text-foreground">
                     {investmentRoiMultiple !== null ? `${investmentRoiMultiple.toFixed(1)}×` : "—"}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Investment payback period</div>
+                  <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Investment payback period</div>
                   <div className="tabular-nums font-semibold text-2xl leading-none text-foreground">
                     {breakevenMo !== null ? `${breakevenMo.toFixed(1)}` : "—"}
                     {breakevenMo !== null && <span className="text-xs font-medium text-muted-foreground ml-1">months</span>}
@@ -463,7 +463,7 @@ function RailInput({ label, value, onChange, prefix }) {
   useEffect(() => { if (!focused) setDraft(String(value)); }, [value, focused]);
   return (
     <div>
-      <label className="block text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">{label}</label>
+      <label className="block text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">{label}</label>
       <div className="relative">
         {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">{prefix}</span>}
         <input
@@ -599,7 +599,7 @@ function BoardView({ state, updBoard }) {
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Annual financial impact</h2>
           </div>
-          <div className="inline-flex items-center gap-2 text-[11px] text-muted-foreground rounded-full border border-border/60 bg-aneko-elev/40 px-3 py-1 tabular-nums">
+          <div className="inline-flex items-center gap-2 text-xs text-muted-foreground rounded-full border border-border/60 bg-aneko-elev/40 px-3 py-1 tabular-nums">
             <span>@ {efficiencyGain.toFixed(1)}% efficiency gain</span>
             <span className="text-border">·</span>
             <span>{fmt(radiologists)} rads</span>
@@ -608,11 +608,11 @@ function BoardView({ state, updBoard }) {
 
         {/* Hero total */}
         <section className="shrink-0 rounded-lg bg-aneko-elev/60 ring-1 ring-aneko-success/20 px-6 py-5">
-          <div className="text-[11px] uppercase tracking-widest text-aneko-success font-semibold">
-            Total annual value <span className="text-muted-foreground/70 font-medium normal-case tracking-normal">(AUD)</span>
+          <div className="text-xs uppercase tracking-widest text-aneko-success font-semibold">
+            Total annual value <span className="text-muted-foreground font-medium normal-case tracking-normal">(AUD)</span>
           </div>
           <div className={`tabular-nums font-bold text-5xl leading-none mt-2 transition-colors duration-500 ${flashTotal ? "text-primary" : "text-aneko-success"}`}>{fmtCurrency(totalValue)}</div>
-          <p className="text-xs text-muted-foreground mt-2 max-w-2xl">
+          <p className="text-[13px] text-muted-foreground mt-2 max-w-2xl leading-snug">
             Revenue from reclaimed minutes reinvested into additional reads. Operational savings from retained efficiency are shown separately below — they are not booked as revenue.
           </p>
         </section>
@@ -620,28 +620,28 @@ function BoardView({ state, updBoard }) {
         {/* Key metrics — minutes reclaimed first (drives everything downstream) */}
         <section className="shrink-0 rounded-lg bg-aneko-elev/60 px-5 py-4 ring-1 ring-primary/15">
           <div className="flex items-baseline justify-between mb-3">
-            <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Key metrics</h3>
+            <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Key metrics</h3>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
             <div>
-              <div className="text-[11px] uppercase tracking-widest text-primary font-semibold leading-tight">Minutes reclaimed / shift</div>
+              <div className="text-xs uppercase tracking-widest text-primary font-semibold leading-tight">Minutes reclaimed / shift</div>
               <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashReclaimed ? "text-primary" : "text-foreground"}`}>{minReclaimed.toFixed(1)} min</div>
-              <div className="text-[11px] text-muted-foreground mt-1">Per radiologist · from modeled efficiency gain</div>
+              <div className="text-[13px] text-muted-foreground mt-1 leading-snug">Per radiologist · from modeled efficiency gain</div>
             </div>
             <div>
-              <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Extra reads / shift</div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Extra reads / shift</div>
               <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashExtraReads ? "text-primary" : "text-foreground"}`}>+{extraReadsPerShift.toFixed(2)}</div>
-              <div className="text-[11px] text-muted-foreground mt-1">Per radiologist · from reinvested minutes</div>
+              <div className="text-[13px] text-muted-foreground mt-1 leading-snug">Per radiologist · from reinvested minutes</div>
             </div>
             <div>
-              <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Extra studies / yr</div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Extra studies / yr</div>
               <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashStudies ? "text-primary" : "text-foreground"}`}>{fmt(addStudiesYr)}</div>
-              <div className="text-[11px] text-muted-foreground mt-1">Network total · moves with reinvest slider</div>
+              <div className="text-[13px] text-muted-foreground mt-1 leading-snug">Network total · moves with reinvest slider</div>
             </div>
             <div>
-              <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Equiv. radiologists</div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Equiv. radiologists</div>
               <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashEquiv ? "text-primary" : "text-foreground"}`}>{equivRads.toFixed(1)}</div>
-              <div className="text-[11px] text-muted-foreground mt-1">Total FTE capacity recovered</div>
+              <div className="text-[13px] text-muted-foreground mt-1 leading-snug">Total FTE capacity recovered</div>
             </div>
           </div>
         </section>
@@ -649,15 +649,15 @@ function BoardView({ state, updBoard }) {
         {/* Operational savings — informational, NOT summed into the hero */}
         <section className="shrink-0 rounded-lg bg-aneko-elev/40 px-5 py-4">
           <div className="flex items-baseline justify-between gap-4">
-            <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Operational savings</h3>
+            <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Operational savings</h3>
             <div className={`tabular-nums font-semibold text-2xl leading-none transition-colors duration-500 ${flashLabor ? "text-primary" : "text-foreground"}`}>{fmtCurrency(laborSaved)}</div>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-2 leading-snug">
+          <p className="text-[13px] text-muted-foreground mt-2 leading-snug">
             Labor cost of {labMin.toFixed(1)} min / shift retained as efficiency ({fmt(radiologists)} rads × {fmt(shiftsPerYear)} shifts at ~${radCostPerMin.toFixed(2)}/min). Not booked as revenue.
           </p>
           {labMin > 0.005 && (
-            <p className="text-[11px] text-muted-foreground/90 mt-1.5 leading-snug">
-              <span className="text-muted-foreground/70">→</span> If reinvested instead: <span className="text-foreground font-medium tabular-nums">+{extraReadsPerShiftIfReinvested.toFixed(2)}</span> reads / shift worth <span className="text-foreground font-medium tabular-nums">{fmtShort(revenueIfReinvested)}</span> / yr
+            <p className="text-[13px] text-muted-foreground mt-1.5 leading-snug">
+              <span className="text-muted-foreground">→</span> If reinvested instead: <span className="text-foreground font-medium tabular-nums">+{extraReadsPerShiftIfReinvested.toFixed(2)}</span> reads / shift worth <span className="text-foreground font-medium tabular-nums">{fmtShort(revenueIfReinvested)}</span> / yr
             </p>
           )}
         </section>
@@ -665,7 +665,7 @@ function BoardView({ state, updBoard }) {
         {/* Scenario drivers — full width of shell */}
         <section className="shrink-0 rounded-lg bg-aneko-elev/60 px-5 py-4">
           <div className="flex items-baseline justify-between mb-3">
-            <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Scenario drivers</h3>
+            <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Scenario drivers</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
             <div className="min-w-0">
@@ -673,10 +673,10 @@ function BoardView({ state, updBoard }) {
                 onChange={(v) => updBoard("efficiencyGain", v)}
                 display={`${efficiencyGain.toFixed(1)}%`}
                 minL="0%" maxL="10%" />
-              <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
+              <p className="text-[13px] text-muted-foreground mt-1.5 leading-snug">
                 Share of shift time Aneko reclaims from interruption, info-seeking, and context-switching.
               </p>
-              <div className="mt-2 flex items-baseline justify-between text-xs">
+              <div className="mt-2 flex items-baseline justify-between text-[13px]">
                 <span className="text-muted-foreground">Time reclaimed / shift</span>
                 <span className="tabular-nums font-semibold text-foreground">{minReclaimed.toFixed(1)} min</span>
               </div>
@@ -686,10 +686,10 @@ function BoardView({ state, updBoard }) {
                 onChange={(v) => updBoard("reinvestPct", v)}
                 display={`${reinvestPct}%`}
                 minL="0%" maxL="100%" />
-              <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
+              <p className="text-[13px] text-muted-foreground mt-1.5 leading-snug">
                 Controls how much reclaimed time becomes billable reads. The total above scales linearly with this slider; retained efficiency is shown separately as operational savings.
               </p>
-              <div className="mt-2 space-y-0.5 text-xs">
+              <div className="mt-2 space-y-1 text-[13px]">
                 <div className="flex justify-between gap-2"><span className="text-muted-foreground">More reads ({reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{capMin.toFixed(1)} min / shift</span></div>
                 <div className="flex justify-between gap-2"><span className="text-muted-foreground">Efficiency retained ({100-reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{labMin.toFixed(1)} min / shift</span></div>
               </div>
@@ -701,13 +701,13 @@ function BoardView({ state, updBoard }) {
         <section className="rounded-lg bg-aneko-elev/60 px-5 pt-4 pb-3">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 pb-2">
             <div>
-              <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Efficiency sensitivity</h3>
+              <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Efficiency sensitivity</h3>
             </div>
           </div>
           <div className="w-full">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                <tr className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
                   <th className="text-left py-2 pr-2 font-semibold">
                     <span className="md:hidden">Gain</span>
                     <span className="hidden md:inline">Efficiency</span>
@@ -774,7 +774,7 @@ function OpsView({ state, updOps, updShared }) {
     <div className="w-full max-w-5xl flex flex-col gap-4 px-8 py-6">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
         <h2 className="text-sm font-semibold text-foreground">Results &amp; diagnostic</h2>
-        <p className="text-xs text-muted-foreground max-w-xl">
+        <p className="text-[13px] text-muted-foreground max-w-xl">
           Within-read interruptions · edit assumptions inline below
         </p>
       </div>
@@ -788,8 +788,8 @@ function OpsView({ state, updOps, updShared }) {
 
       <section className="rounded-lg bg-aneko-elev/60 px-5 py-4">
         <div className="flex items-baseline justify-between mb-3">
-          <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Assumptions</h3>
-          <span className="text-[11px] text-muted-foreground">Inputs driving every metric above</span>
+          <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Assumptions</h3>
+          <span className="text-xs text-muted-foreground">Inputs driving every metric above</span>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <InputCard label="Radiologists" value={state.shared.radiologists} onChange={(v) => updShared("radiologists", v)} />
@@ -803,16 +803,16 @@ function OpsView({ state, updOps, updShared }) {
         <div className="px-4 pt-3 pb-2 flex flex-wrap items-baseline justify-between gap-2">
           <div className="min-w-0">
             <h2 className="text-sm font-semibold text-foreground">Interruption inventory</h2>
-            <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-              <span className="font-medium text-foreground/80">Engines</span>: <span className="text-violet-300">Comms</span> · <span className="text-primary">Intake</span> · <span className="text-aneko-warning">Preference</span> · <span className="text-slate-300">General</span>
+            <p className="text-[13px] text-muted-foreground mt-1 leading-snug">
+              <span className="font-medium text-foreground">Engines</span>: <span className="text-violet-300">Comms</span> · <span className="text-primary">Intake</span> · <span className="text-aneko-warning">Preference</span> · <span className="text-slate-300">General</span>
             </p>
           </div>
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold whitespace-nowrap">Per rad / shift</div>
+          <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold whitespace-nowrap">Per rad / shift</div>
         </div>
         <div className="w-full">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+              <tr className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
                 <th className="text-center px-2 py-2 w-10">#</th>
                 <th className="text-left px-2 py-2">Category</th>
                 <th className="text-left px-2 py-2">Engine</th>
@@ -860,7 +860,7 @@ function OpsView({ state, updOps, updShared }) {
               })}
               <tr className="border-t-2 border-border/80">
                 <td></td>
-                <td className="px-2 py-3 text-muted-foreground uppercase tracking-wide text-[10px] font-semibold" colSpan={2}>Total</td>
+                <td className="px-2 py-3 text-muted-foreground uppercase tracking-wide text-xs font-semibold" colSpan={2}>Total</td>
                 <td></td><td></td>
                 <td className="px-2 py-3 text-right tabular-nums font-bold text-xl text-foreground">{totals.tot.toFixed(1)}</td>
                 <td></td>
@@ -962,7 +962,7 @@ function Tile({ label, value, sub, valueTone }) {
     : "text-foreground";
   return (
     <div className="rounded-lg bg-aneko-elev/60 px-3 py-2.5">
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold truncate">{label}</div>
+      <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold truncate">{label}</div>
       <div className="flex items-baseline justify-between gap-2 mt-1">
         <div className={`text-3xl font-bold tabular-nums leading-none ${valueClass}`}>{value}</div>
         {sub && <div className="text-xs text-muted-foreground tabular-nums">{sub}</div>}
@@ -975,7 +975,7 @@ function Tile({ label, value, sub, valueTone }) {
 function HeroTile({ label, value, sub }) {
   return (
     <div className="rounded-lg bg-aneko-elev/60 ring-1 ring-aneko-success/30 px-3 py-2.5">
-      <div className="text-[10px] uppercase tracking-widest text-aneko-success font-semibold truncate">{label}</div>
+      <div className="text-xs uppercase tracking-widest text-aneko-success font-semibold truncate">{label}</div>
       <div className="flex items-baseline justify-between gap-2 mt-1">
         <div className="text-3xl font-bold tabular-nums leading-none text-aneko-success">{value}</div>
         {sub && <div className="text-xs text-muted-foreground tabular-nums">{sub}</div>}
@@ -1013,7 +1013,7 @@ function SliderInput({ label, value, min, max, step, onChange, display, minL, ma
         className="w-full accent-primary cursor-pointer"
       />
       {(minL || maxL) && (
-        <div className="flex justify-between text-[11px] text-muted-foreground mt-0.5">
+        <div className="flex justify-between text-xs text-muted-foreground mt-0.5">
           <span>{minL}</span>
           <span>{maxL}</span>
         </div>
