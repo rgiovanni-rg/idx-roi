@@ -624,22 +624,22 @@ function BoardView({ state, updBoard }) {
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
-              <div className="text-xs uppercase tracking-widest text-primary font-semibold leading-tight">Minutes reclaimed / shift</div>
+              <div className={`text-xs uppercase tracking-widest font-semibold leading-tight transition-colors duration-500 ${minReclaimed >= 0.05 ? "text-aneko-success" : "text-muted-foreground"}`}>Minutes reclaimed / shift</div>
               <div className={`tabular-nums font-semibold text-2xl leading-none mt-2 transition-colors duration-500 ${flashReclaimed ? "text-primary" : "text-foreground"}`}>{minReclaimed.toFixed(1)} min</div>
               <div className="text-[13px] text-muted-foreground mt-2 leading-snug">Per rad · from efficiency gain</div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Extra studies / shift</div>
+              <div className={`text-xs uppercase tracking-widest font-semibold leading-tight transition-colors duration-500 ${extraReadsPerShift >= 0.005 ? "text-aneko-success" : "text-muted-foreground"}`}>Extra studies / shift</div>
               <div className={`tabular-nums font-semibold text-2xl leading-none mt-2 transition-colors duration-500 ${flashExtraReads ? "text-primary" : "text-foreground"}`}>+{extraReadsPerShift.toFixed(2)}</div>
               <div className="text-[13px] text-muted-foreground mt-2 leading-snug">Per rad · from reinvested minutes</div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Extra studies / yr</div>
+              <div className={`text-xs uppercase tracking-widest font-semibold leading-tight transition-colors duration-500 ${addStudiesYr >= 1 ? "text-aneko-success" : "text-muted-foreground"}`}>Extra studies / yr</div>
               <div className={`tabular-nums font-semibold text-2xl leading-none mt-2 transition-colors duration-500 ${flashStudies ? "text-primary" : "text-foreground"}`}>{fmt(addStudiesYr)}</div>
               <div className="text-[13px] text-muted-foreground mt-2 leading-snug">Network total · moves with reinvest</div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Equiv. radiologists</div>
+              <div className={`text-xs uppercase tracking-widest font-semibold leading-tight transition-colors duration-500 ${equivRads >= 0.05 ? "text-aneko-success" : "text-muted-foreground"}`}>Equiv. radiologists</div>
               <div className={`tabular-nums font-semibold text-2xl leading-none mt-2 transition-colors duration-500 ${flashEquiv ? "text-primary" : "text-foreground"}`}>{equivRads.toFixed(1)}</div>
               <div className="text-[13px] text-muted-foreground mt-2 leading-snug">FTE capacity recovered</div>
             </div>
