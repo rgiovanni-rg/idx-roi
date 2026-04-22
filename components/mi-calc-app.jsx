@@ -130,7 +130,7 @@ function computeCorporate(state) {
   // same opportunity value regardless of whether it's booked as extra throughput or
   // absorbed as efficiency. Keeps the hero stable across the reinvest slider.
   const laborSaved = radiologists * shiftsPerYear * labMin * revPerMin;
-  const equivRads = (minReclaimed * radiologists) / shiftMinutes;
+  const equivRads = shiftMinutes > 0 ? (minReclaimed * radiologists) / shiftMinutes : 0;
   const totalValue = revenueUnlocked + laborSaved;
   const breakevenMo = engagementCost > 0 && totalValue > 0 ? engagementCost / (totalValue / 12) : null;
   const investmentRoiMultiple =
@@ -143,7 +143,8 @@ function computeCorporate(state) {
     const ast = (wTime > 0 ? cM / wTime : 0) * shiftsPerYear * radiologists;
     const rev = ast * wRev;
     const lab = radiologists * shiftsPerYear * lM * revPerMin;
-    return { pct, mR, ast, rev, lab, total: rev + lab, equiv: (mR * radiologists) / shiftMinutes };
+    const equiv = shiftMinutes > 0 ? (mR * radiologists) / shiftMinutes : 0;
+    return { pct, mR, ast, rev, lab, total: rev + lab, equiv };
   });
 
   return {
