@@ -109,20 +109,27 @@ const fmtShort = (n) => {
 
 // ---------- compute (shared between views and export) ----------
 function computeCorporate(state) {
-  const { radiologists, shiftsPerYear, shiftMinutes, radCostPerYear } = state.shared;
+  const { radiologists, shiftsPerYear, shiftMinutes } = state.shared;
   const { efficiencyGain, reinvestPct, engagementCost, modalities } = state.board;
 
   const totalMix = modalities.reduce((s, m) => s + m.mixPct, 0);
   const wRev  = totalMix === 0 ? 0 : modalities.reduce((s, m) => s + (m.mixPct / totalMix) * m.revenuePerStudy, 0);
   const wTime = totalMix === 0 ? 0 : modalities.reduce((s, m) => s + (m.mixPct / totalMix) * m.readMinutes, 0);
 
+  const revPerMin = wTime > 0 ? wRev / wTime : 0;
+  const readsPerShift = wTime > 0 ? shiftMinutes / wTime : 0;
+
   const minReclaimed = shiftMinutes * (efficiencyGain / 100);
   const capMin = minReclaimed * (reinvestPct / 100);
   const labMin = minReclaimed * (1 - reinvestPct / 100);
+  const extraReadsPerShift = wTime > 0 ? capMin / wTime : 0;
   const addStudiesYr = (wTime > 0 ? capMin / wTime : 0) * shiftsPerYear * radiologists;
   const revenueUnlocked = addStudiesYr * wRev;
-  const radCostPerMin = radCostPerYear / (shiftsPerYear * shiftMinutes);
-  const laborSaved = radiologists * shiftsPerYear * labMin * radCostPerMin;
+  // Value retained efficiency at the same revenue-equivalent rate as reinvested time.
+  // Rationale: in a capacity-constrained radiology network every freed minute has the
+  // same opportunity value regardless of whether it's booked as extra throughput or
+  // absorbed as efficiency. Keeps the hero stable across the reinvest slider.
+  const laborSaved = radiologists * shiftsPerYear * labMin * revPerMin;
   const equivRads = (minReclaimed * radiologists) / shiftMinutes;
   const totalValue = revenueUnlocked + laborSaved;
   const breakevenMo = engagementCost > 0 && totalValue > 0 ? engagementCost / (totalValue / 12) : null;
@@ -135,14 +142,15 @@ function computeCorporate(state) {
     const lM = mR * (1 - reinvestPct / 100);
     const ast = (wTime > 0 ? cM / wTime : 0) * shiftsPerYear * radiologists;
     const rev = ast * wRev;
-    const lab = radiologists * shiftsPerYear * lM * radCostPerMin;
+    const lab = radiologists * shiftsPerYear * lM * revPerMin;
     return { pct, mR, ast, rev, lab, total: rev + lab, equiv: (mR * radiologists) / shiftMinutes };
   });
 
   return {
     wRev, wTime, totalMix,
+    revPerMin, readsPerShift, extraReadsPerShift,
     minReclaimed, capMin, labMin,
-    addStudiesYr, revenueUnlocked, radCostPerMin, laborSaved, equivRads,
+    addStudiesYr, revenueUnlocked, laborSaved, equivRads,
     totalValue, breakevenMo, investmentRoiMultiple, scenarios,
   };
 }
@@ -212,19 +220,22 @@ function exportWorkbook(state) {
     ["CORPORATE ROI"],
     [],
     ["OUTPUTS"],
+    ["Reading capacity per shift (reads)", Number(c.readsPerShift.toFixed(2))],
     ["Minutes reclaimed per shift", Number(c.minReclaimed.toFixed(2))],
+    ["Extra reads per shift (from reinvested time)", Number(c.extraReadsPerShift.toFixed(2))],
     ["Capacity minutes (to reading)", Number(c.capMin.toFixed(2))],
-    ["Labor minutes (realized efficiency)", Number(c.labMin.toFixed(2))],
+    ["Efficiency-retained minutes", Number(c.labMin.toFixed(2))],
     ["Additional studies per year", Math.round(c.addStudiesYr)],
     ["Revenue unlocked (AUD)", Math.round(c.revenueUnlocked)],
-    ["Realized efficiency value (AUD)", Math.round(c.laborSaved)],
+    ["Efficiency retained - opportunity value (AUD)", Math.round(c.laborSaved)],
     ["ANNUAL TOTAL VALUE (AUD)", Math.round(c.totalValue)],
+    ["Valuation basis", "Revenue-equivalent (wRev / wTime) per reclaimed minute"],
     ["Investment ROI (× annual value)", c.investmentRoiMultiple !== null ? Number(c.investmentRoiMultiple.toFixed(2)) : ""],
     ["Investment payback (months)", c.breakevenMo !== null ? Number(c.breakevenMo.toFixed(2)) : ""],
     ["Equivalent radiologists", Number(c.equivRads.toFixed(2))],
     [],
     ["SENSITIVITY"],
-    ["Efficiency gain %", "Reclaimed / shift (min)", "Additional studies / yr", "Revenue unlocked (AUD)", "Realized efficiency (AUD)", "Total annual value (AUD)", "Equivalent rads"],
+    ["Efficiency gain %", "Reclaimed / shift (min)", "Additional studies / yr", "Revenue unlocked (AUD)", "Efficiency retained (AUD)", "Total annual value (AUD)", "Equivalent rads"],
     ...c.scenarios.map(s => [s.pct, Number(s.mR.toFixed(2)), Math.round(s.ast), Math.round(s.rev), Math.round(s.lab), Math.round(s.total), Number(s.equiv.toFixed(2))]),
   ];
   const corpSheet = XLSX.utils.aoa_to_sheet(corp);
@@ -259,7 +270,7 @@ function exportWorkbook(state) {
 function AssumptionsRail({ tab, state, updShared, updBoard }) {
   const { modalities, engagementCost } = state.board;
   const c = useMemo(() => computeCorporate(state), [state]);
-  const { wRev, wTime, totalMix, breakevenMo, investmentRoiMultiple } = c;
+  const { wRev, wTime, totalMix, readsPerShift, breakevenMo, investmentRoiMultiple } = c;
 
   const mixGap = totalMix - 100;
   const mixStatus = mixGap === 0 ? "balanced" : mixGap > 0 ? "over" : "under";
@@ -370,6 +381,15 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
                   </td>
                   <td className="text-right tabular-nums py-2.5 px-1 font-semibold text-sm text-foreground">{fmtCurrency(wRev)}</td>
                   <td className="text-right tabular-nums py-2.5 pl-1 font-semibold text-sm text-foreground">{wTime.toFixed(1)}</td>
+                </tr>
+                <tr className="border-t border-border/40 bg-aneko-elev/30">
+                  <th scope="row" colSpan={3} className="py-2 text-left text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                    Reading capacity / shift
+                    <span className="block text-[11px] normal-case tracking-normal font-normal text-muted-foreground/80 mt-0.5">
+                      Theoretical max at the modeled read-mix. Your rads' actual baseline will be lower — that gap is what Aneko closes.
+                    </span>
+                  </th>
+                  <td className="text-right tabular-nums py-2 pl-1 font-semibold text-sm text-foreground">{readsPerShift.toFixed(1)}</td>
                 </tr>
               </tbody>
             </table>
@@ -540,7 +560,7 @@ function BoardView({ state, updBoard }) {
   const { efficiencyGain, reinvestPct } = state.board;
 
   const c = useMemo(() => computeCorporate(state), [state]);
-  const { minReclaimed, capMin, labMin, addStudiesYr, revenueUnlocked, laborSaved, equivRads, totalValue, scenarios } = c;
+  const { minReclaimed, capMin, labMin, addStudiesYr, revenueUnlocked, laborSaved, equivRads, totalValue, scenarios, extraReadsPerShift } = c;
 
   // Pitch-style: indigo flash when a value just changed, fades back to its semantic color
   const flashTotal = useFlash(totalValue);
@@ -574,7 +594,7 @@ function BoardView({ state, updBoard }) {
           </div>
           <div className={`tabular-nums font-bold text-5xl leading-none mt-2 transition-colors duration-500 ${flashTotal ? "text-primary" : "text-aneko-success"}`}>{fmtCurrency(totalValue)}</div>
           <p className="text-xs text-muted-foreground mt-2 max-w-2xl">
-            Revenue from the extra studies your team can read, plus the dollar value of realized efficiency.
+            Value of capacity unlocked &mdash; whether realized as additional studies read or retained as efficiency. Reclaimed minutes are valued at the network average revenue per reading minute.
           </p>
         </section>
 
@@ -619,8 +639,8 @@ function BoardView({ state, updBoard }) {
               </tr>
               <tr className="border-t border-border/40">
                 <th scope="row" className="py-2.5 text-left font-medium text-foreground">
-                  + Realized efficiency
-                  <span className="block text-[11px] font-normal text-muted-foreground">Dollar value of efficiency gains not reinvested in additional reads</span>
+                  + Efficiency retained (opportunity value)
+                  <span className="block text-[11px] font-normal text-muted-foreground">Reclaimed minutes kept as efficiency, valued at network average revenue per reading minute</span>
                 </th>
                 <td className={`py-2.5 text-right tabular-nums font-semibold text-2xl transition-colors duration-500 ${flashLabor ? "text-primary" : "text-foreground"}`}>{fmtCurrency(laborSaved)}</td>
               </tr>
@@ -654,7 +674,8 @@ function BoardView({ state, updBoard }) {
                 minL="0%" maxL="100%" />
               <div className="mt-2 space-y-0.5 text-xs">
                 <div className="flex justify-between gap-2"><span className="text-muted-foreground">More reads ({reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{capMin.toFixed(1)} min / shift</span></div>
-                <div className="flex justify-between gap-2"><span className="text-muted-foreground">Realized efficiency ({100-reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{labMin.toFixed(1)} min / shift</span></div>
+                <div className="flex justify-between gap-2"><span className="text-muted-foreground">Efficiency retained ({100-reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{labMin.toFixed(1)} min / shift</span></div>
+                <div className="flex justify-between gap-2 pt-1 mt-1 border-t border-border/40"><span className="text-muted-foreground">Extra reads / shift</span><span className="tabular-nums font-semibold text-primary">+{extraReadsPerShift.toFixed(2)}</span></div>
               </div>
             </div>
           </div>
@@ -685,8 +706,8 @@ function BoardView({ state, updBoard }) {
                   </th>
                   <th className="text-right py-2 px-2 font-semibold">Revenue</th>
                   <th className="text-right py-2 px-2 font-semibold">
-                    <span className="md:hidden">Real.</span>
-                    <span className="hidden md:inline">Realized efficiency</span>
+                    <span className="md:hidden">Eff.</span>
+                    <span className="hidden md:inline">Efficiency retained</span>
                   </th>
                   <th className="text-right py-2 px-2 font-semibold text-aneko-success">Total</th>
                   <th className="text-right py-2 pl-2 font-semibold">
