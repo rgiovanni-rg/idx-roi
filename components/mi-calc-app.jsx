@@ -587,6 +587,7 @@ function BoardView({ state, updBoard }) {
   const flashLabor = useFlash(laborSaved);
   const flashEquiv = useFlash(equivRads);
   const flashReclaimed = useFlash(minReclaimed);
+  const flashExtraReads = useFlash(extraReadsPerShift);
 
   const { radiologists, shiftsPerYear } = state.shared;
 
@@ -621,16 +622,21 @@ function BoardView({ state, updBoard }) {
           <div className="flex items-baseline justify-between mb-3">
             <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Key metrics</h3>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
             <div>
               <div className="text-[11px] uppercase tracking-widest text-primary font-semibold leading-tight">Minutes reclaimed / shift</div>
               <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashReclaimed ? "text-primary" : "text-foreground"}`}>{minReclaimed.toFixed(1)} min</div>
               <div className="text-[11px] text-muted-foreground mt-1">Per radiologist · from modeled efficiency gain</div>
             </div>
             <div>
+              <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Extra reads / shift</div>
+              <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashExtraReads ? "text-primary" : "text-foreground"}`}>+{extraReadsPerShift.toFixed(2)}</div>
+              <div className="text-[11px] text-muted-foreground mt-1">Per radiologist · from reinvested minutes</div>
+            </div>
+            <div>
               <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Extra studies / yr</div>
               <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashStudies ? "text-primary" : "text-foreground"}`}>{fmt(addStudiesYr)}</div>
-              <div className="text-[11px] text-muted-foreground mt-1">From reinvested minutes · moves with reinvest slider</div>
+              <div className="text-[11px] text-muted-foreground mt-1">Network total · moves with reinvest slider</div>
             </div>
             <div>
               <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Equiv. radiologists</div>
@@ -686,7 +692,6 @@ function BoardView({ state, updBoard }) {
               <div className="mt-2 space-y-0.5 text-xs">
                 <div className="flex justify-between gap-2"><span className="text-muted-foreground">More reads ({reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{capMin.toFixed(1)} min / shift</span></div>
                 <div className="flex justify-between gap-2"><span className="text-muted-foreground">Efficiency retained ({100-reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{labMin.toFixed(1)} min / shift</span></div>
-                <div className="flex justify-between gap-2 pt-1 mt-1 border-t border-border/40"><span className="text-muted-foreground">Extra reads / shift</span><span className="tabular-nums font-semibold text-primary">+{extraReadsPerShift.toFixed(2)}</span></div>
               </div>
             </div>
           </div>
