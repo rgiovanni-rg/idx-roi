@@ -610,14 +610,14 @@ function BoardView({ state, updBoard }) {
               <div className="text-[11px] text-muted-foreground mt-1">Per radiologist · from modeled efficiency gain</div>
             </div>
             <div>
-              <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Studies / yr</div>
+              <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Extra studies / yr</div>
               <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashStudies ? "text-primary" : "text-foreground"}`}>{fmt(addStudiesYr)}</div>
-              <div className="text-[11px] text-muted-foreground mt-1">Extra studies read</div>
+              <div className="text-[11px] text-muted-foreground mt-1">From reinvested minutes · moves with reinvest slider</div>
             </div>
             <div>
               <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Equiv. radiologists</div>
               <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashEquiv ? "text-primary" : "text-foreground"}`}>{equivRads.toFixed(1)}</div>
-              <div className="text-[11px] text-muted-foreground mt-1">Net new clinical capacity</div>
+              <div className="text-[11px] text-muted-foreground mt-1">Total FTE capacity recovered</div>
             </div>
           </div>
         </section>
@@ -662,6 +662,9 @@ function BoardView({ state, updBoard }) {
                 onChange={(v) => updBoard("efficiencyGain", v)}
                 display={`${efficiencyGain.toFixed(1)}%`}
                 minL="0%" maxL="10%" />
+              <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
+                Share of shift time Aneko reclaims from interruption, info-seeking, and context-switching.
+              </p>
               <div className="mt-2 flex items-baseline justify-between text-xs">
                 <span className="text-muted-foreground">Time reclaimed / shift</span>
                 <span className="tabular-nums font-semibold text-foreground">{minReclaimed.toFixed(1)} min</span>
@@ -672,6 +675,9 @@ function BoardView({ state, updBoard }) {
                 onChange={(v) => updBoard("reinvestPct", v)}
                 display={`${reinvestPct}%`}
                 minL="0%" maxL="100%" />
+              <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
+                Allocates reclaimed time between additional throughput and retained efficiency. Total annual value stays constant.
+              </p>
               <div className="mt-2 space-y-0.5 text-xs">
                 <div className="flex justify-between gap-2"><span className="text-muted-foreground">More reads ({reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{capMin.toFixed(1)} min / shift</span></div>
                 <div className="flex justify-between gap-2"><span className="text-muted-foreground">Efficiency retained ({100-reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{labMin.toFixed(1)} min / shift</span></div>
