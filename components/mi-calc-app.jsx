@@ -117,6 +117,7 @@ function computeCorporate(state) {
   const wTime = totalMix === 0 ? 0 : modalities.reduce((s, m) => s + (m.mixPct / totalMix) * m.readMinutes, 0);
 
   const readsPerShift = wTime > 0 ? shiftMinutes / wTime : 0;
+  const revPerMin = wTime > 0 ? wRev / wTime : 0;
 
   const minReclaimed = shiftMinutes * (efficiencyGain / 100);
   const capMin = minReclaimed * (reinvestPct / 100);
@@ -124,15 +125,20 @@ function computeCorporate(state) {
   const extraReadsPerShift = wTime > 0 ? capMin / wTime : 0;
   const addStudiesYr = (wTime > 0 ? capMin / wTime : 0) * shiftsPerYear * radiologists;
   const revenueUnlocked = addStudiesYr * wRev;
-  // Retained efficiency is valued at radiologist cost per minute: this is labor
-  // efficiency, not revenue. Revenue only materializes when the minutes are
-  // reinvested into additional reads.
+  // Retained efficiency is labor efficiency, not revenue. It is valued at the
+  // radiologist cost per minute. Revenue only materializes when minutes are
+  // actually reinvested into additional reads -- so the hero (totalValue) is
+  // revenueUnlocked only; laborSaved is reported separately as operational
+  // savings, and revenueIfReinvested is a what-if translator showing what the
+  // retained minutes would be worth if fully converted to billable reads.
   const radCostPerMin = shiftsPerYear > 0 && shiftMinutes > 0
     ? radCostPerYear / (shiftsPerYear * shiftMinutes)
     : 0;
   const laborSaved = radiologists * shiftsPerYear * labMin * radCostPerMin;
+  const extraReadsPerShiftIfReinvested = wTime > 0 ? labMin / wTime : 0;
+  const revenueIfReinvested = labMin * revPerMin * radiologists * shiftsPerYear;
   const equivRads = shiftMinutes > 0 ? (minReclaimed * radiologists) / shiftMinutes : 0;
-  const totalValue = revenueUnlocked + laborSaved;
+  const totalValue = revenueUnlocked;
   const breakevenMo = engagementCost > 0 && totalValue > 0 ? engagementCost / (totalValue / 12) : null;
   const investmentRoiMultiple =
     engagementCost > 0 ? totalValue / engagementCost : null;
@@ -145,14 +151,14 @@ function computeCorporate(state) {
     const rev = ast * wRev;
     const lab = radiologists * shiftsPerYear * lM * radCostPerMin;
     const equiv = shiftMinutes > 0 ? (mR * radiologists) / shiftMinutes : 0;
-    return { pct, mR, ast, rev, lab, total: rev + lab, equiv };
+    return { pct, mR, ast, rev, lab, total: rev, equiv };
   });
 
   return {
     wRev, wTime, totalMix,
-    readsPerShift, extraReadsPerShift,
+    readsPerShift, extraReadsPerShift, extraReadsPerShiftIfReinvested, revPerMin,
     minReclaimed, capMin, labMin,
-    addStudiesYr, revenueUnlocked, radCostPerMin, laborSaved, equivRads,
+    addStudiesYr, revenueUnlocked, radCostPerMin, laborSaved, revenueIfReinvested, equivRads,
     totalValue, breakevenMo, investmentRoiMultiple, scenarios,
   };
 }
@@ -229,18 +235,24 @@ function exportWorkbook(state) {
     ["Labor minutes (realized efficiency)", Number(c.labMin.toFixed(2))],
     ["Additional studies per year", Math.round(c.addStudiesYr)],
     ["Revenue unlocked (AUD)", Math.round(c.revenueUnlocked)],
-    ["Realized efficiency value (AUD)", Math.round(c.laborSaved)],
-    ["ANNUAL TOTAL VALUE (AUD)", Math.round(c.totalValue)],
+    ["ANNUAL TOTAL VALUE (AUD) - revenue only", Math.round(c.totalValue)],
     ["Investment ROI (× annual value)", c.investmentRoiMultiple !== null ? Number(c.investmentRoiMultiple.toFixed(2)) : ""],
     ["Investment payback (months)", c.breakevenMo !== null ? Number(c.breakevenMo.toFixed(2)) : ""],
     ["Equivalent radiologists", Number(c.equivRads.toFixed(2))],
     [],
+    ["OPERATIONAL SAVINGS (not included in total)"],
+    ["Realized efficiency value (AUD)", Math.round(c.laborSaved)],
+    ["Realized efficiency basis", "Labor cost; informational, not booked as revenue and not included in total"],
+    ["Extra reads / shift if reinvested", Number(c.extraReadsPerShiftIfReinvested.toFixed(2))],
+    ["Revenue potential if fully reinvested (AUD)", Math.round(c.revenueIfReinvested)],
+    ["Reinvestment translator basis", "labMin * revPerMin * rads * shifts; what-if, not included in total"],
+    [],
     ["SENSITIVITY"],
-    ["Efficiency gain %", "Reclaimed / shift (min)", "Additional studies / yr", "Revenue unlocked (AUD)", "Realized efficiency (AUD)", "Total annual value (AUD)", "Equivalent rads"],
-    ...c.scenarios.map(s => [s.pct, Number(s.mR.toFixed(2)), Math.round(s.ast), Math.round(s.rev), Math.round(s.lab), Math.round(s.total), Number(s.equiv.toFixed(2))]),
+    ["Efficiency gain %", "Reclaimed / shift (min)", "Additional studies / yr", "Revenue (AUD)", "Equivalent rads"],
+    ...c.scenarios.map(s => [s.pct, Number(s.mR.toFixed(2)), Math.round(s.ast), Math.round(s.rev), Number(s.equiv.toFixed(2))]),
   ];
   const corpSheet = XLSX.utils.aoa_to_sheet(corp);
-  corpSheet["!cols"] = [{ wch: 32 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 18 }, { wch: 16 }, { wch: 12 }];
+  corpSheet["!cols"] = [{ wch: 44 }, { wch: 18 }, { wch: 18 }, { wch: 16 }, { wch: 14 }];
   XLSX.utils.book_append_sheet(wb, corpSheet, "Corporate ROI");
 
   // Sheet 3: Operations Diagnostic
@@ -561,17 +573,22 @@ function BoardView({ state, updBoard }) {
   const { efficiencyGain, reinvestPct } = state.board;
 
   const c = useMemo(() => computeCorporate(state), [state]);
-  const { minReclaimed, capMin, labMin, addStudiesYr, revenueUnlocked, laborSaved, equivRads, totalValue, scenarios, extraReadsPerShift } = c;
+  const {
+    minReclaimed, capMin, labMin,
+    addStudiesYr, revenueUnlocked, laborSaved, revenueIfReinvested,
+    equivRads, totalValue, scenarios,
+    extraReadsPerShift, extraReadsPerShiftIfReinvested,
+    radCostPerMin,
+  } = c;
 
   // Pitch-style: indigo flash when a value just changed, fades back to its semantic color
   const flashTotal = useFlash(totalValue);
-  const flashRev = useFlash(revenueUnlocked);
   const flashStudies = useFlash(addStudiesYr);
   const flashLabor = useFlash(laborSaved);
   const flashEquiv = useFlash(equivRads);
   const flashReclaimed = useFlash(minReclaimed);
 
-  const { radiologists } = state.shared;
+  const { radiologists, shiftsPerYear } = state.shared;
 
   return (
     <div className="w-full">
@@ -595,7 +612,7 @@ function BoardView({ state, updBoard }) {
           </div>
           <div className={`tabular-nums font-bold text-5xl leading-none mt-2 transition-colors duration-500 ${flashTotal ? "text-primary" : "text-aneko-success"}`}>{fmtCurrency(totalValue)}</div>
           <p className="text-xs text-muted-foreground mt-2 max-w-2xl">
-            Revenue from extra studies read, plus the dollar value of realized labor efficiency. Moving the reinvest slider shifts the split between the two.
+            Revenue from reclaimed minutes reinvested into additional reads. Operational savings from retained efficiency are shown separately below — they are not booked as revenue.
           </p>
         </section>
 
@@ -623,33 +640,20 @@ function BoardView({ state, updBoard }) {
           </div>
         </section>
 
-        {/* Bridge — dollars */}
-        <section className="shrink-0 rounded-lg bg-aneko-elev/60 px-5 py-4">
-          <div className="flex items-baseline justify-between mb-3">
-            <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">How it adds up</h3>
-            <span className="text-[11px] text-muted-foreground">AUD / year</span>
+        {/* Operational savings — informational, NOT summed into the hero */}
+        <section className="shrink-0 rounded-lg bg-aneko-elev/40 px-5 py-4">
+          <div className="flex items-baseline justify-between gap-4">
+            <h3 className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Operational savings</h3>
+            <div className={`tabular-nums font-semibold text-2xl leading-none transition-colors duration-500 ${flashLabor ? "text-primary" : "text-foreground"}`}>{fmtCurrency(laborSaved)}</div>
           </div>
-          <table className="w-full text-sm">
-            <tbody>
-              <tr className="border-t border-border/40">
-                <th scope="row" className="py-2.5 text-left font-medium text-foreground">
-                  Revenue unlocked
-                  <span className="block text-[11px] font-normal text-muted-foreground">From extra studies read per shift</span>
-                </th>
-                <td className={`py-2.5 text-right tabular-nums font-semibold text-2xl transition-colors duration-500 ${flashRev ? "text-primary" : "text-foreground"}`}>{fmtCurrency(revenueUnlocked)}</td>
-              </tr>
-              <tr className="border-t border-border/40">
-                <th scope="row" className="py-2.5 text-left font-medium text-foreground">
-                  + Realized efficiency
-                  <span className="block text-[11px] font-normal text-muted-foreground">Labor cost of minutes kept as efficiency (not reinvested into additional reads)</span>
-                </th>
-                <td className={`py-2.5 text-right tabular-nums font-semibold text-2xl transition-colors duration-500 ${flashLabor ? "text-primary" : "text-foreground"}`}>{fmtCurrency(laborSaved)}</td>
-              </tr>
-            </tbody>
-          </table>
-          <p className="text-[11px] text-muted-foreground mt-3 pt-3 border-t border-border/40">
-            These two components sum to the total annual value at the top.
+          <p className="text-[11px] text-muted-foreground mt-2 leading-snug">
+            Labor cost of {labMin.toFixed(1)} min / shift retained as efficiency ({fmt(radiologists)} rads × {fmt(shiftsPerYear)} shifts at ~${radCostPerMin.toFixed(2)}/min). Not booked as revenue.
           </p>
+          {labMin > 0.005 && (
+            <p className="text-[11px] text-muted-foreground/90 mt-1.5 leading-snug">
+              <span className="text-muted-foreground/70">→</span> If reinvested instead: <span className="text-foreground font-medium tabular-nums">+{extraReadsPerShiftIfReinvested.toFixed(2)}</span> reads / shift worth <span className="text-foreground font-medium tabular-nums">{fmtShort(revenueIfReinvested)}</span> / yr
+            </p>
+          )}
         </section>
 
         {/* Scenario drivers — full width of shell */}
@@ -677,7 +681,7 @@ function BoardView({ state, updBoard }) {
                 display={`${reinvestPct}%`}
                 minL="0%" maxL="100%" />
               <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
-                Allocates reclaimed time between additional reads (valued at revenue) and retained efficiency (valued at labor cost).
+                Controls how much reclaimed time becomes billable reads. The total above scales linearly with this slider; retained efficiency is shown separately as operational savings.
               </p>
               <div className="mt-2 space-y-0.5 text-xs">
                 <div className="flex justify-between gap-2"><span className="text-muted-foreground">More reads ({reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{capMin.toFixed(1)} min / shift</span></div>
@@ -711,12 +715,7 @@ function BoardView({ state, updBoard }) {
                     <span className="md:hidden">Studies</span>
                     <span className="hidden md:inline">Studies / yr</span>
                   </th>
-                  <th className="text-right py-2 px-2 font-semibold">Revenue</th>
-                  <th className="text-right py-2 px-2 font-semibold">
-                    <span className="md:hidden">Real.</span>
-                    <span className="hidden md:inline">Realized efficiency</span>
-                  </th>
-                  <th className="text-right py-2 px-2 font-semibold text-aneko-success">Total</th>
+                  <th className="text-right py-2 px-2 font-semibold text-aneko-success">Revenue</th>
                   <th className="text-right py-2 pl-2 font-semibold">
                     <span className="md:hidden">Eq.</span>
                     <span className="hidden md:inline">Equiv. rads</span>
@@ -737,9 +736,7 @@ function BoardView({ state, updBoard }) {
                       </td>
                       <td className="text-right tabular-nums py-2.5 px-2 text-foreground text-sm">{s.mR.toFixed(1)}</td>
                       <td className="text-right tabular-nums py-2.5 px-2 text-foreground text-sm">{fmt(s.ast)}</td>
-                      <td className="text-right tabular-nums py-2.5 px-2 text-foreground text-sm">{fmtShort(s.rev)}</td>
-                      <td className="text-right tabular-nums py-2.5 px-2 text-foreground text-sm">{fmtShort(s.lab)}</td>
-                      <td className={`text-right tabular-nums py-2.5 px-2 font-bold text-base ${active ? "text-aneko-success" : "text-foreground"}`}>{fmtShort(s.total)}</td>
+                      <td className={`text-right tabular-nums py-2.5 px-2 font-bold text-base ${active ? "text-aneko-success" : "text-foreground"}`}>{fmtShort(s.rev)}</td>
                       <td className="text-right tabular-nums py-2.5 pl-2 text-foreground text-sm">{s.equiv.toFixed(1)}</td>
                     </tr>
                   );
