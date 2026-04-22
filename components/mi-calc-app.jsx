@@ -313,7 +313,7 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
       <section className="rounded-lg bg-aneko-elev/60 px-5 py-4">
         <div className="flex items-baseline justify-between mb-3">
           <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Shared inputs</h3>
-          <span className="text-xs text-muted-foreground">Network baseline</span>
+          <span className="text-xs text-muted-foreground">Network-wide</span>
         </div>
         <div className="grid grid-cols-4 gap-x-3">
           <RailInput label="Radiologists" value={state.shared.radiologists} onChange={(v) => updShared("radiologists", v)} />
@@ -328,9 +328,9 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
           {/* Study mix — volume share per typical shift */}
           <section className="rounded-lg bg-aneko-elev/60 px-5 py-4">
             <div className="flex items-baseline justify-between mb-3">
-              <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Study mix per shift</h3>
+              <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Study mix</h3>
               <span className="text-[13px] text-muted-foreground text-right max-w-[14rem] leading-snug">
-                Share of studies by modality on a typical shift (sum 100%)
+                Share by modality on a typical shift (sum 100%)
               </span>
             </div>
             <table className="w-full text-sm">
@@ -399,7 +399,7 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
                   <th scope="row" colSpan={3} className="py-2 text-left text-xs uppercase tracking-widest text-muted-foreground font-semibold">
                     Reading capacity / shift
                     <span className="block text-[13px] normal-case tracking-normal font-normal text-muted-foreground mt-1 leading-snug">
-                      Theoretical max at the modeled read-mix. Your rads' actual baseline will be lower — that gap is what Aneko closes.
+                      Theoretical max at the modeled mix. Actual baseline is lower — that gap is what Aneko closes.
                     </span>
                   </th>
                   <td className="text-right tabular-nums py-2 pl-1 font-semibold text-sm text-foreground">{readsPerShift.toFixed(1)}</td>
@@ -412,7 +412,7 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
           <section className="rounded-lg bg-aneko-elev/60 px-5 py-4">
             <div className="flex items-baseline justify-between mb-3">
               <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Investment</h3>
-              <span className="text-xs text-muted-foreground">Year 1 vs. total annual value</span>
+              <span className="text-xs text-muted-foreground">Year 1 vs. annual value</span>
             </div>
             <div className="space-y-4">
               <div>
@@ -441,7 +441,7 @@ function AssumptionsRail({ tab, state, updShared, updBoard }) {
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Investment payback period</div>
+                  <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1.5">Investment payback</div>
                   <div className="tabular-nums font-semibold text-2xl leading-none text-foreground">
                     {breakevenMo !== null ? `${breakevenMo.toFixed(1)}` : "—"}
                     {breakevenMo !== null && <span className="text-xs font-medium text-muted-foreground ml-1">months</span>}
@@ -613,7 +613,7 @@ function BoardView({ state, updBoard }) {
           </div>
           <div className={`tabular-nums font-bold text-5xl leading-none mt-2 transition-colors duration-500 ${flashTotal ? "text-primary" : "text-aneko-success"}`}>{fmtCurrency(totalValue)}</div>
           <p className="text-[13px] text-muted-foreground mt-2 max-w-2xl leading-snug">
-            Revenue from reclaimed minutes reinvested into additional reads. Operational savings from retained efficiency are shown separately below — they are not booked as revenue.
+            Revenue from reclaimed minutes reinvested into reads. Retained efficiency sits below — not booked as revenue.
           </p>
         </section>
 
@@ -626,22 +626,22 @@ function BoardView({ state, updBoard }) {
             <div>
               <div className="text-xs uppercase tracking-widest text-primary font-semibold leading-tight">Minutes reclaimed / shift</div>
               <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashReclaimed ? "text-primary" : "text-foreground"}`}>{minReclaimed.toFixed(1)} min</div>
-              <div className="text-[13px] text-muted-foreground mt-1 leading-snug">Per radiologist · from modeled efficiency gain</div>
+              <div className="text-[13px] text-muted-foreground mt-1 leading-snug">Per rad · from efficiency gain</div>
             </div>
             <div>
               <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Extra reads / shift</div>
               <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashExtraReads ? "text-primary" : "text-foreground"}`}>+{extraReadsPerShift.toFixed(2)}</div>
-              <div className="text-[13px] text-muted-foreground mt-1 leading-snug">Per radiologist · from reinvested minutes</div>
+              <div className="text-[13px] text-muted-foreground mt-1 leading-snug">Per rad · from reinvested minutes</div>
             </div>
             <div>
               <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Extra studies / yr</div>
               <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashStudies ? "text-primary" : "text-foreground"}`}>{fmt(addStudiesYr)}</div>
-              <div className="text-[13px] text-muted-foreground mt-1 leading-snug">Network total · moves with reinvest slider</div>
+              <div className="text-[13px] text-muted-foreground mt-1 leading-snug">Network total · moves with reinvest</div>
             </div>
             <div>
               <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold leading-tight">Equiv. radiologists</div>
               <div className={`tabular-nums font-semibold text-2xl leading-none mt-1 transition-colors duration-500 ${flashEquiv ? "text-primary" : "text-foreground"}`}>{equivRads.toFixed(1)}</div>
-              <div className="text-[13px] text-muted-foreground mt-1 leading-snug">Total FTE capacity recovered</div>
+              <div className="text-[13px] text-muted-foreground mt-1 leading-snug">FTE capacity recovered</div>
             </div>
           </div>
         </section>
@@ -653,11 +653,11 @@ function BoardView({ state, updBoard }) {
             <div className={`tabular-nums font-semibold text-2xl leading-none transition-colors duration-500 ${flashLabor ? "text-primary" : "text-foreground"}`}>{fmtCurrency(laborSaved)}</div>
           </div>
           <p className="text-[13px] text-muted-foreground mt-2 leading-snug">
-            Labor cost of {labMin.toFixed(1)} min / shift retained as efficiency ({fmt(radiologists)} rads × {fmt(shiftsPerYear)} shifts at ~${radCostPerMin.toFixed(2)}/min). Not booked as revenue.
+            Labor cost of {labMin.toFixed(1)} min / shift retained ({fmt(radiologists)} rads × {fmt(shiftsPerYear)} shifts at ~${radCostPerMin.toFixed(2)}/min). Not booked as revenue.
           </p>
           {labMin > 0.005 && (
             <p className="text-[13px] text-muted-foreground mt-1.5 leading-snug">
-              <span className="text-muted-foreground">→</span> If reinvested instead: <span className="text-foreground font-medium tabular-nums">+{extraReadsPerShiftIfReinvested.toFixed(2)}</span> reads / shift worth <span className="text-foreground font-medium tabular-nums">{fmtShort(revenueIfReinvested)}</span> / yr
+              <span className="text-muted-foreground">→</span> If reinvested: <span className="text-foreground font-medium tabular-nums">+{extraReadsPerShiftIfReinvested.toFixed(2)}</span> reads / shift worth <span className="text-foreground font-medium tabular-nums">{fmtShort(revenueIfReinvested)}</span> / yr
             </p>
           )}
         </section>
@@ -674,7 +674,7 @@ function BoardView({ state, updBoard }) {
                 display={`${efficiencyGain.toFixed(1)}%`}
                 minL="0%" maxL="10%" />
               <p className="text-[13px] text-muted-foreground mt-1.5 leading-snug">
-                Share of shift time Aneko reclaims from interruption, info-seeking, and context-switching.
+                Shift time Aneko reclaims from interruptions, info-seeking, and context-switching.
               </p>
               <div className="mt-2 flex items-baseline justify-between text-[13px]">
                 <span className="text-muted-foreground">Time reclaimed / shift</span>
@@ -687,7 +687,7 @@ function BoardView({ state, updBoard }) {
                 display={`${reinvestPct}%`}
                 minL="0%" maxL="100%" />
               <p className="text-[13px] text-muted-foreground mt-1.5 leading-snug">
-                Controls how much reclaimed time becomes billable reads. The total above scales linearly with this slider; retained efficiency is shown separately as operational savings.
+                How much reclaimed time becomes billable reads. Total scales linearly; the rest shows above as operational savings.
               </p>
               <div className="mt-2 space-y-1 text-[13px]">
                 <div className="flex justify-between gap-2"><span className="text-muted-foreground">More reads ({reinvestPct}%)</span><span className="tabular-nums font-semibold text-foreground">{capMin.toFixed(1)} min / shift</span></div>
@@ -775,7 +775,7 @@ function OpsView({ state, updOps, updShared }) {
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
         <h2 className="text-sm font-semibold text-foreground">Results &amp; diagnostic</h2>
         <p className="text-[13px] text-muted-foreground max-w-xl">
-          Within-read interruptions · edit assumptions inline below
+          Within-read interruptions · edit inline below
         </p>
       </div>
 
@@ -789,7 +789,7 @@ function OpsView({ state, updOps, updShared }) {
       <section className="rounded-lg bg-aneko-elev/60 px-5 py-4">
         <div className="flex items-baseline justify-between mb-3">
           <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Assumptions</h3>
-          <span className="text-xs text-muted-foreground">Inputs driving every metric above</span>
+          <span className="text-xs text-muted-foreground">Drives every metric above</span>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <InputCard label="Radiologists" value={state.shared.radiologists} onChange={(v) => updShared("radiologists", v)} />
